@@ -1,0 +1,72 @@
+package com.hospital.queue_backend.service;
+
+import com.hospital.queue_backend.entity.Patient;
+import com.hospital.queue_backend.entity.User;
+import com.hospital.queue_backend.repository.PatientRepository;
+import com.hospital.queue_backend.repository.UserRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class UserService  {
+
+    private final UserRepository userRepository;
+    private final PatientRepository patientRepository;
+
+    // Constructor Injection (Autowired වෙනුවට industry එකේ පාවිච්චි කරන්නේ මේකයි)
+    public UserService(UserRepository userRepository, PatientRepository patientRepository) {
+        this.userRepository = userRepository;
+        this.patientRepository = patientRepository;
+    }
+
+    @Transactional // වැරදීමක් වුණොත් ටේබල් දෙකටම ඩේටා නොදා Rollback කරන්න
+    public String registerPatient(String nic, String phone, String password, String fullName, int age, String gender) {
+
+        // 1. දැනටමත් මේ NIC හෝ Phone එකෙන් එකවුන්ට් එකක් තියෙනවාද බලනවා
+        if (userRepository.existsByNicNumber(nic)) {
+            return "Error: NIC Number is already registered!";
+        }
+        if (userRepository.existsByPhoneNumber(phone)) {
+            return "Error: Phone Number is already registered!";
+        }
+
+        // 2. මුලින්ම User (Login) එකවුන්ට් එක හදනවා
+        User user = new User();
+        user.setNicNumber(nic);
+        user.setPhoneNumber(phone);
+        user.setPassword(password); // දැනට plain text දාමු, පස්සේ Spring Security වලින් hash කරමු
+        user.setRole("ROLE_PATIENT");
+        User savedUser = userRepository.save(user);
+
+        // 3. ඊට පස්සේ ඒ හැදුණු User එකට Link කරලා Patient Profile එක හදනවා
+        Patient patient = new Patient();
+        patient.setUser(savedUser);
+        patient.setFullName(fullName);
+        patient.setAge(age);
+        patient.setGender(gender);
+        patient.setGender(gender);
+        patientRepository.save(patient);
+
+        return "Patient Registered Successfully!";
+    }
+
+    // User කෙනෙක්ට Login වෙන්න තියෙන Logic එක
+    public String loginUser(String nic, String password) {
+        // 1. දුන්න NIC එකෙන් User කෙනෙක් ඉන්නවාද බලනවා
+        java.util.Optional<User> userOpt = userRepository.findByNicNumber(nic);
+
+        if (userOpt.isEmpty()) {
+            return "Error: User not found with this NIC!";
+        }
+
+        User user = userOpt.get();
+
+        // 2. Password එක ගැලපෙනවාද බලනවා (දැනට plain text, පස්සේ hash කරමු)
+        if (!user.getPassword().equals(password)) {
+            return "Error: Invalid password!";
+        }
+
+        // 3. හැමදේම හරි නම් එයාගේ Role එකත් එක්ක Success කියලා යවනවා
+        return "Login Successful! Role: " + user.getRole();
+    }
+}

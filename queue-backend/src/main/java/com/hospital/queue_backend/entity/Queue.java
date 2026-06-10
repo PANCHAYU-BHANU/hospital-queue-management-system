@@ -31,6 +31,9 @@ public class Queue {
     @Column(nullable = false)
     private String bookedVia; // MOBILE_APP හෝ HOSPITAL_COUNTER (phone නැති අය හඳුනාගන්න)
 
+    @Column(name = "queue_type", nullable = false)
+    private String queueType; // "NORMAL" හෝ "PRIORITY
+
     private java.time.LocalDateTime createdAt; // පෝලිමට එකතු වුණු වෙලාව
 
     @PrePersist
