@@ -2,7 +2,8 @@ package com.hospital.queue_backend.controller;
 
 import com.hospital.queue_backend.service.UserService;
 import org.springframework.web.bind.annotation.*;
-import java.util.Map;
+import com.hospital.queue_backend.dto.request.PatientRegistrationRequest;
+import com.hospital.queue_backend.dto.request.UserLoginRequest;
 
 @RestController
 @RequestMapping("/api/users")
@@ -16,23 +17,13 @@ public class UserController {
 
     // 1. Patient Registration API
     @PostMapping("/register")
-    public String register(@RequestBody Map<String, String> data) {
-        return userService.registerPatient(
-                data.get("nicNumber"),
-                data.get("phoneNumber"),
-                data.get("password"),
-                data.get("fullName"),
-                Integer.parseInt(data.get("age")),
-                data.get("gender")
-        );
+    public String register(@RequestBody PatientRegistrationRequest request) {
+        return userService.registerPatient(request);
     }
 
     // 2. User Login API
     @PostMapping("/login")
-    public String login(@RequestBody Map<String, String> data) {
-        return userService.loginUser(
-                data.get("nicNumber"),
-                data.get("password")
-        );
+    public String login(@RequestBody UserLoginRequest request) {
+        return userService.loginUser(request);
     }
 }

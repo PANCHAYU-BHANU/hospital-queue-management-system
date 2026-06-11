@@ -6,9 +6,12 @@ import com.hospital.queue_backend.entity.Queue;
 import com.hospital.queue_backend.repository.DoctorRepository;
 import com.hospital.queue_backend.repository.PatientRepository;
 import com.hospital.queue_backend.repository.QueueRepository;
+import com.hospital.queue_backend.dto.request.QueueGenerateRequest;
+import com.hospital.queue_backend.dto.response.QueueResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class QueueService {
@@ -26,11 +29,11 @@ public class QueueService {
     }
 
     // 1. ටෝකන් එකක් රික්වෙස්ට් කිරීම (Auto-approve 70+ / Put others to Pending Approval)
-    public String generateToken(Long patientId, Long doctorId, boolean isSpecialNeed) {
+    public String generateToken(QueueGenerateRequest request) {
 
-        Patient patient = patientRepository.findById(patientId)
+        Patient patient = patientRepository.findById(request.getPatientId())
                 .orElseThrow(() -> new RuntimeException("Patient not found!"));
-        Doctor doctor = doctorRepository.findById(doctorId)
+        Doctor doctor = doctorRepository.findById(request.getDoctorId())
                 .orElseThrow(() -> new RuntimeException("Doctor not found!"));
 
         int patientAge = patient.getAge();
@@ -38,7 +41,7 @@ public class QueueService {
         String initialStatus = "PENDING"; // සාමාන්‍යයෙන් කෙලින්ම පෝලිමට වැටෙනවා
 
         // වයස 70+ හෝ විශේෂ අවශ්‍යතා තියෙනවා නම් PRIORITY වෙනවා
-        if (patientAge >= 70 || isSpecialNeed) {
+        if (patientAge >= 70 || request.isSpecialNeed()) {
             determinedType = "PRIORITY";
 
             // හැබැයි වයස 70ට අඩු, විශේෂ අවශ්‍යතා විතරක් දාපු අයව කවුන්ටර් ඇපෘවල් එකට දානවා!
@@ -48,7 +51,7 @@ public class QueueService {
         }
 
         // ටයිප් එක අනුව අද දවසේ ඊළඟ ටෝකන් නම්බර් එක ගන්නවා
-        int nextTokenNumber = queueRepository.findMaxTokenNumberForToday(doctorId, determinedType) + 1;
+        int nextTokenNumber = queueRepository.findMaxTokenNumberForToday(request.getDoctorId(), determinedType) + 1;
 
         Queue queue = new Queue();
         queue.setPatient(patient);
@@ -84,7 +87,7 @@ public class QueueService {
     }
 
     // 3. 2:1 Ratio Algorithm එකෙන් ඊළඟ ලෙඩාව දොස්තරට ලබාදීම
-    public Queue getNextPatientForDoctor(Long doctorId) {
+    public QueueResponse getNextPatientForDoctor(Long doctorId) {
         List<Queue> pendingPriority = queueRepository.findPendingQueueByType(doctorId, "PRIORITY");
         List<Queue> pendingNormal = queueRepository.findPendingQueueByType(doctorId, "NORMAL");
 
@@ -95,25 +98,27 @@ public class QueueService {
         if (!pendingPriority.isEmpty() && (normalPatientCounter >= 2 || pendingNormal.isEmpty())) {
             Queue nextPriorityPatient = pendingPriority.get(0);
             normalPatientCounter = 0;
-            return nextPriorityPatient;
+            return new QueueResponse(nextPriorityPatient);
         }
 
         if (!pendingNormal.isEmpty()) {
             Queue nextNormalPatient = pendingNormal.get(0);
             normalPatientCounter++;
-            return nextNormalPatient;
+            return new QueueResponse(nextNormalPatient);
         }
 
         Queue nextPriorityPatient = pendingPriority.get(0);
         normalPatientCounter = 0;
-        return nextPriorityPatient;
+        return new QueueResponse(nextPriorityPatient);
     }
 
-    public List<Queue> getTodayQueue(Long doctorId) {
-        return queueRepository.findTodayQueueForDoctor(doctorId);
+    public List<QueueResponse> getTodayQueue(Long doctorId) {
+        return queueRepository.findTodayQueueForDoctor(doctorId)
+                .stream().map(QueueResponse::new).collect(Collectors.toList());
     }
 
-    public List<Queue> getPendingApprovals() {
-        return queueRepository.findTodayPendingApprovals();
+    public List<QueueResponse> getPendingApprovals() {
+        return queueRepository.findTodayPendingApprovals()
+                .stream().map(QueueResponse::new).collect(Collectors.toList());
     }
 }

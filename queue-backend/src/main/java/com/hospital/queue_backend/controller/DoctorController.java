@@ -2,7 +2,7 @@ package com.hospital.queue_backend.controller;
 
 import com.hospital.queue_backend.service.DoctorService;
 import org.springframework.web.bind.annotation.*;
-import java.util.Map;
+import com.hospital.queue_backend.dto.request.DoctorRegistrationRequest;
 
 @RestController
 @RequestMapping("/api/doctors")
@@ -15,14 +15,7 @@ public class DoctorController {
     }
 
     @PostMapping("/register")
-    public String registerDoctor(@RequestBody Map<String, String> data) {
-        return doctorService.registerDoctor(
-                data.get("nicNumber"),
-                data.get("phoneNumber"),
-                data.get("password"),
-                data.get("doctorName"),
-                data.get("specialization"),
-                data.get("roomNumber")
-        );
+    public String registerDoctor(@RequestBody DoctorRegistrationRequest request) {
+        return doctorService.registerDoctor(request);
     }
 }

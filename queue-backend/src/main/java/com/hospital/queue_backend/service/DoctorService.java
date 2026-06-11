@@ -4,6 +4,7 @@ import com.hospital.queue_backend.entity.Doctor;
 import com.hospital.queue_backend.entity.User;
 import com.hospital.queue_backend.repository.DoctorRepository;
 import com.hospital.queue_backend.repository.UserRepository;
+import com.hospital.queue_backend.dto.request.DoctorRegistrationRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,30 +19,30 @@ public class DoctorService {
     }
 
     @Transactional
-    public String registerDoctor(String nic, String phone, String password, String doctorName, String specialization, String roomNumber) {
+    public String registerDoctor(DoctorRegistrationRequest request) {
 
         // 1. NIC හෝ Phone එකෙන් දැනටමත් කෙනෙක් ඉන්නවාද බලනවා
-        if (userRepository.existsByNicNumber(nic)) {
+        if (userRepository.existsByNicNumber(request.getNicNumber())) {
             return "Error: NIC Number is already registered!";
         }
-        if (doctorRepository.existsByRoomNumber(roomNumber)) {
+        if (doctorRepository.existsByRoomNumber(request.getRoomNumber())) {
             return "Error: Room/Counter Number is already assigned to another doctor!";
         }
 
         // 2. Doctor කෙනාටත් Login එකවුන්ට් (User) එකක් හදනවා
         User user = new User();
-        user.setNicNumber(nic);
-        user.setPhoneNumber(phone);
-        user.setPassword(password);
+        user.setNicNumber(request.getNicNumber());
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setPassword(request.getPassword());
         user.setRole("ROLE_DOCTOR"); // Role එක DOCTOR විදියට දානවා
         User savedUser = userRepository.save(user);
 
         // 3. Doctor Profile එක ලින්ක් කරලා සේව් කරනවා
         Doctor doctor = new Doctor();
         doctor.setUser(savedUser);
-        doctor.setDoctorName(doctorName);
-        doctor.setSpecialization(specialization);
-        doctor.setRoomNumber(roomNumber);
+        doctor.setDoctorName(request.getDoctorName());
+        doctor.setSpecialization(request.getSpecialization());
+        doctor.setRoomNumber(request.getRoomNumber());
         doctorRepository.save(doctor);
 
         return "Doctor Registered Successfully!";

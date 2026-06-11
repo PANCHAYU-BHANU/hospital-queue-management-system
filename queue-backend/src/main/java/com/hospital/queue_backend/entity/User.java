@@ -24,5 +24,5 @@ public class User {
     private String password;
 
     @Column(nullable = false)
-    private String role; // ROLE_PATIENT, ROLE_DOCTOR, ROLE_ADMIN
+    private String role; // ROLE_PATIENT, ROLE_DOCTOR, ROLE_COUNTER, ROLE_ADMIN
 }
