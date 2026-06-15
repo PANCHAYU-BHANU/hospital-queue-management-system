@@ -100,6 +100,11 @@ public class UserService  {
             if (staff.isPresent() && staff.get().getHospital() != null) {
                 response += ", HospitalId: " + staff.get().getHospital().getId();
             }
+        } else if (user.getRole().equals("ROLE_PATIENT")) {
+            Optional<Patient> patient = patientRepository.findByUser(user);
+            if (patient.isPresent() && patient.get().getFullName() != null) {
+                response += ", FullName: " + patient.get().getFullName();
+            }
         }
         
         return response;

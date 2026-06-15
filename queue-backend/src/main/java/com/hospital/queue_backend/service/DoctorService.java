@@ -52,9 +52,52 @@ public class DoctorService {
         doctor.setSpecialization(request.getSpecialization());
         doctor.setRoomNumber(request.getRoomNumber());
         doctor.setHospital(hospital);
+        if (request.getIsAvailable() != null) {
+            doctor.setAvailable(request.getIsAvailable());
+        } else {
+            doctor.setAvailable(true);
+        }
         doctorRepository.save(doctor);
 
         return "Doctor Registered Successfully!";
+    }
+
+    @Transactional
+    public String deleteDoctor(Long id) {
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Error: Doctor not found!"));
+        User user = doctor.getUser();
+        doctorRepository.delete(doctor);
+        userRepository.delete(user);
+        return "Doctor deleted successfully!";
+    }
+
+    @Transactional
+    public String updateDoctor(Long id, DoctorRegistrationRequest request) {
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Error: Doctor not found!"));
+        
+        User user = doctor.getUser();
+        if (request.getNicNumber() != null && !request.getNicNumber().equals(user.getNicNumber())) {
+             if (userRepository.existsByNicNumber(request.getNicNumber())) return "Error: NIC already in use!";
+             user.setNicNumber(request.getNicNumber());
+        }
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().equals(user.getPhoneNumber())) {
+             if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) return "Error: Phone already in use!";
+             user.setPhoneNumber(request.getPhoneNumber());
+        }
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+             user.setPassword(request.getPassword());
+        }
+        
+        if (request.getDoctorName() != null) doctor.setDoctorName(request.getDoctorName());
+        if (request.getSpecialization() != null) doctor.setSpecialization(request.getSpecialization());
+        if (request.getRoomNumber() != null) doctor.setRoomNumber(request.getRoomNumber());
+        if (request.getIsAvailable() != null) doctor.setAvailable(request.getIsAvailable());
+        
+        userRepository.save(user);
+        doctorRepository.save(doctor);
+        return "Doctor updated successfully!";
     }
 
     public java.util.List<com.hospital.queue_backend.dto.response.DoctorResponse> getAllDoctors() {
@@ -64,7 +107,9 @@ public class DoctorService {
                         doctor.getDoctorName(),
                         doctor.getSpecialization(),
                         doctor.getRoomNumber(),
-                        doctor.isAvailable()
+                        doctor.isAvailable(),
+                        doctor.getUser().getNicNumber(),
+                        doctor.getUser().getPhoneNumber()
                 ))
                 .collect(java.util.stream.Collectors.toList());
     }

@@ -19,6 +19,16 @@ public class DoctorController {
         return doctorService.registerDoctor(request);
     }
 
+    @PutMapping("/update/{id}")
+    public String updateDoctor(@PathVariable Long id, @RequestBody DoctorRegistrationRequest request) {
+        return doctorService.updateDoctor(id, request);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public String deleteDoctor(@PathVariable Long id) {
+        return doctorService.deleteDoctor(id);
+    }
+
     @GetMapping("/all")
     public java.util.List<com.hospital.queue_backend.dto.response.DoctorResponse> getAllDoctors() {
         return doctorService.getAllDoctors();

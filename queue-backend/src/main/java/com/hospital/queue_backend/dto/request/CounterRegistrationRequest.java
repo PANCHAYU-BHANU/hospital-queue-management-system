@@ -9,4 +9,5 @@ public class CounterRegistrationRequest {
     private String password;
     private String fullName;
     private String counterNumber;
+    private Long hospitalId;
 }

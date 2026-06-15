@@ -19,4 +19,19 @@ public class CounterController {
     public String registerCounter(@RequestBody CounterRegistrationRequest request) {
         return counterService.registerCounter(request);
     }
+
+    @PutMapping("/update/{id}")
+    public String updateCounter(@PathVariable Long id, @RequestBody CounterRegistrationRequest request) {
+        return counterService.updateCounter(id, request);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public String deleteCounter(@PathVariable Long id) {
+        return counterService.deleteCounter(id);
+    }
+
+    @GetMapping("/all")
+    public java.util.List<com.hospital.queue_backend.entity.CounterStaff> getAllCounters() {
+        return counterService.getAllCounters();
+    }
 }

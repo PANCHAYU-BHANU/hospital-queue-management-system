@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
 
 // 💡 App.jsx එකෙන් එන 'user' ප්‍රොප් එක මෙතනට ගන්නවා
 function PatientDashboard({ user }) {
@@ -96,10 +98,11 @@ function PatientDashboard({ user }) {
       if (response.ok) {
         const activeTicket = await response.json();
         setTicket(activeTicket); // 👈 ආපු ටෝකන් ඩේටා ටික දකුණු පැත්තේ කාඩ් එකට සෙට් කළා
-        alert("ටෝකන් එක සාර්ථකව ගත්තා මචන්! 🎟️✅");
+        toast.success("ටෝකන් එක සාර්ථකව ගත්තා මචන්! 🎟️✅");
       } else {
         const errText = await response.text();
         setError(errText || "ටෝකන් එක ගන්න බැරි වුණා. සමහරවිට ඔයා දැනටමත් පෝලිමක ඇති!");
+        toast.error("ටෝකන් එක ගන්න බැරි වුණා.");
       }
     } catch (err) {
       setError("Server එකට සම්බන්ධ වෙන්න බැහැ මචන්! Backend එක Run වෙනවද බලන්න.");
@@ -111,26 +114,38 @@ function PatientDashboard({ user }) {
 
   const handleLeaveQueue = async () => {
     if (!ticket) return;
-    if (window.confirm("Are you sure you want to leave the queue?")) {
-      try {
-        const res = await fetch(`http://localhost:8080/api/queue/leave/${ticket.id}`, {
-          method: 'PUT'
-        });
-        const text = await res.text();
-        if (res.ok) {
-          alert(text);
-          setTicket(null); // Clear ticket
-        } else {
-          alert("Failed to leave queue.");
+
+    Swal.fire({
+      title: 'Leave Queue?',
+      text: "Are you sure you want to leave the queue?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#94a3b8',
+      confirmButtonText: 'Yes, leave it!',
+      cancelButtonText: 'Cancel'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await fetch(`http://localhost:8080/api/queue/leave/${ticket.id}`, {
+            method: 'PUT'
+          });
+          const text = await res.text();
+          if (res.ok) {
+            toast.success(text);
+            setTicket(null); // Clear ticket
+          } else {
+            toast.error("Failed to leave queue.");
+          }
+        } catch (err) {
+          console.error(err);
         }
-      } catch (err) {
-        console.error(err);
       }
-    }
+    });
   };
 
   return (
-    <div className="grid min-h-screen grid-cols-1 gap-8 p-8 lg:grid-cols-12 bg-slate-50">
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
       
       {/* 🟣 වම් පැත්ත: REQUEST NEW TOKEN FORM */}
       <div className="p-8 space-y-6 bg-white border shadow-sm lg:col-span-6 rounded-3xl border-slate-200 h-fit">
@@ -186,7 +201,7 @@ function PatientDashboard({ user }) {
       </div>
 
       {/* 🎫 දකුණු පැත්ත: YOUR ACTIVE TICKET CARD */}
-      <div className="lg:col-span-6 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center items-center min-h-[350px]">
+      <div className="lg:col-span-6 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center items-center h-fit min-h-[350px]">
         
         {!ticket ? (
           /* ටෝකන් එකක් නැති වෙලාවට පෙන්වන Screen එක */

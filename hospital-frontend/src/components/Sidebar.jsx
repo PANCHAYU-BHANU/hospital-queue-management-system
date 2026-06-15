@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
 
-function Sidebar({ role, fullName, onLogout }) {
+function Sidebar({ role, fullName, onLogout, activeTab, setActiveTab }) {
   const [isOpen, setIsOpen] = useState(false); // Mobile එකේදී Sidebar එක open/close කරන්න
 
   const getMenuItems = () => {
     switch (role) {
+      case 'ADMIN':
+        return [
+          { name: 'Manage Doctors', icon: '👨‍⚕️' },
+          { name: 'Manage Counters', icon: '🧑‍💻' },
+          { name: 'Hospital Settings', icon: '⚙️' }
+        ];
       case 'DOCTOR':
         return [
           { name: 'Live Queue', icon: '👥' },
@@ -58,7 +64,7 @@ function Sidebar({ role, fullName, onLogout }) {
       {/* 🏢 Main Sidebar Container */}
       <div className={`
         fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-100 flex flex-col justify-between p-4 shadow-xl transition-transform duration-300 ease-in-out
-        md:relative md:translate-x-0
+        md:sticky md:top-0 md:h-screen md:translate-x-0
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div>
@@ -86,9 +92,13 @@ function Sidebar({ role, fullName, onLogout }) {
               <a
                 key={index}
                 href="#"
-                onClick={() => setIsOpen(false)} // ලින්ක් එකක් ක්ලික් කරාම මොබයිල් එකේදී සයිඩ්බාර් එක වැහෙනවා
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveTab(item.name);
+                  setIsOpen(false);
+                }}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition duration-150 ${
-                  index === 0 
+                  activeTab === item.name 
                     ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/10' 
                     : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
                 }`}

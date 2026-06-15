@@ -15,4 +15,6 @@ public class DoctorResponse {
     private String specialization;
     private String roomNumber;
     private boolean isAvailable;
+    private String nicNumber;
+    private String phoneNumber;
 }

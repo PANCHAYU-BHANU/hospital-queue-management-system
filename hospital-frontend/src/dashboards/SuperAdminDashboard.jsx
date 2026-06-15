@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import Swal from 'sweetalert2';
 import L from 'leaflet';
 
 // Fix for default Leaflet icon issues in React
@@ -18,6 +19,9 @@ function SuperAdminDashboard() {
   const [hospitalForm, setHospitalForm] = useState({ name: '', district: '', latitude: '', longitude: '' });
   const [adminForm, setAdminForm] = useState({ fullName: '', nicNumber: '', phoneNumber: '', password: '', hospitalId: '' });
   
+  const [admins, setAdmins] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  
   const [hLoading, setHLoading] = useState(false);
   const [aLoading, setALoading] = useState(false);
   const [error, setError] = useState(null);
@@ -25,7 +29,18 @@ function SuperAdminDashboard() {
 
   useEffect(() => {
     fetchHospitals();
+    fetchAdmins();
   }, []);
+
+  const fetchAdmins = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/api/superadmin/all');
+      if (response.ok) {
+        const data = await response.json();
+        setAdmins(data);
+      }
+    } catch (err) { console.error(err); }
+  };
 
   const fetchHospitals = async () => {
     try {
@@ -117,6 +132,7 @@ function SuperAdminDashboard() {
       if (res.ok && !text.includes("Error")) {
         showMessage("Hospital Admin added successfully! ✅");
         setAdminForm({ fullName: '', nicNumber: '', phoneNumber: '', password: '', hospitalId: hospitals.length > 0 ? hospitals[0].id : '' });
+        fetchAdmins();
       } else {
         showMessage(text, true);
       }
@@ -126,6 +142,80 @@ function SuperAdminDashboard() {
       setALoading(false);
     }
   };
+
+  const handleEditAdmin = (admin) => {
+    const hospitalOptions = hospitals.map(h => `<option value="${h.id}" ${admin.hospital?.id === h.id ? 'selected' : ''}>${h.name}</option>`).join('');
+    Swal.fire({
+      title: 'Edit Hospital Admin',
+      html: `
+        <input id="swal-fullName" class="swal2-input" placeholder="Full Name" value="${admin.fullName || ''}">
+        <select id="swal-hospitalId" class="swal2-input">
+          ${hospitalOptions}
+        </select>
+        <input id="swal-nicNumber" class="swal2-input" placeholder="NIC (Login)" value="${admin.user?.nicNumber || ''}">
+        <input id="swal-phoneNumber" class="swal2-input" placeholder="Phone" value="${admin.user?.phoneNumber || ''}">
+        <input id="swal-password" type="password" class="swal2-input" placeholder="New Password (Optional)">
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Update',
+      confirmButtonColor: '#0d9488',
+      preConfirm: () => {
+        return {
+          fullName: document.getElementById('swal-fullName').value,
+          hospitalId: document.getElementById('swal-hospitalId').value,
+          nicNumber: document.getElementById('swal-nicNumber').value,
+          phoneNumber: document.getElementById('swal-phoneNumber').value,
+          password: document.getElementById('swal-password').value
+        }
+      }
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const response = await fetch(`http://localhost:8080/api/superadmin/update/${admin.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(result.value)
+          });
+          if(response.ok) {
+            Swal.fire('Updated!', 'Admin updated successfully', 'success');
+            fetchAdmins();
+          } else {
+            Swal.fire('Error', await response.text(), 'error');
+          }
+        } catch(e) { Swal.fire('Error', 'Server error', 'error'); }
+      }
+    });
+  };
+
+  const handleDeleteAdmin = (id) => {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "This will delete the admin and their login access!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#e11d48',
+      confirmButtonText: 'Yes, delete it!'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const response = await fetch(`http://localhost:8080/api/superadmin/delete/${id}`, { method: 'DELETE' });
+          if(response.ok) {
+            Swal.fire('Deleted!', 'Admin has been deleted.', 'success');
+            fetchAdmins();
+          } else {
+            Swal.fire('Error', await response.text(), 'error');
+          }
+        } catch(e) { Swal.fire('Error', 'Server error', 'error'); }
+      }
+    });
+  };
+
+  const filteredAdmins = admins.filter(admin => {
+    const query = searchQuery.toLowerCase();
+    const hName = admin.hospital?.name?.toLowerCase() || '';
+    const aName = admin.fullName?.toLowerCase() || '';
+    return hName.includes(query) || aName.includes(query);
+  });
 
   return (
     <div className="min-h-screen p-8 space-y-10 bg-slate-50">
@@ -215,6 +305,64 @@ function SuperAdminDashboard() {
           </form>
         </div>
 
+      </div>
+
+      {/* ADMIN TABLE WITH SEARCH */}
+      <div className="max-w-6xl mx-auto mt-10 overflow-hidden bg-white border shadow-sm rounded-3xl border-slate-200">
+        <div className="flex flex-col md:flex-row items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50 gap-4">
+          <h3 className="text-xl font-black text-slate-800">
+            Registered Hospital Admins
+          </h3>
+          <div className="flex items-center space-x-4 w-full md:w-auto">
+            <input 
+              type="text" 
+              placeholder="Search by Hospital or Name..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full md:w-72 px-4 py-2 text-sm font-bold border rounded-xl border-slate-200 focus:ring-teal-500 outline-none"
+            />
+            <span className="px-4 py-1 text-xs font-black text-slate-700 uppercase bg-slate-200 rounded-full shrink-0">
+              Total: {filteredAdmins.length} Admins
+            </span>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="text-xs font-bold uppercase border-b text-slate-400 bg-slate-50/80 border-slate-100">
+                <th className="p-6">Admin Name</th>
+                <th className="p-6">Assigned Hospital</th>
+                <th className="p-6">NIC / Phone</th>
+                <th className="p-6 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredAdmins.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="p-10 font-bold text-center text-slate-400">
+                    No admins found matching your search.
+                  </td>
+                </tr>
+              ) : (
+                filteredAdmins.map((admin) => (
+                  <tr key={admin.id} className="transition hover:bg-slate-50/80">
+                    <td className="p-6 font-bold text-slate-700">{admin.fullName || 'N/A'}</td>
+                    <td className="p-6 font-semibold text-teal-700">{admin.hospital?.name || 'No Hospital'}</td>
+                    <td className="p-6 font-medium text-slate-500">
+                      <div>{admin.user?.nicNumber || 'N/A'}</div>
+                      <div className="text-xs text-slate-400">{admin.user?.phoneNumber || 'N/A'}</div>
+                    </td>
+                    <td className="p-6 space-x-2 text-right">
+                      <button onClick={() => handleEditAdmin(admin)} className="px-3 py-1.5 text-xs font-bold text-teal-700 bg-teal-100 rounded-lg hover:bg-teal-200">Edit</button>
+                      <button onClick={() => handleDeleteAdmin(admin.id)} className="px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-100 rounded-lg hover:bg-rose-200">Delete</button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
     </div>

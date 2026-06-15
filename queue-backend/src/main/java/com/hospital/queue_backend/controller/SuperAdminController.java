@@ -19,4 +19,19 @@ public class SuperAdminController {
     public String registerAdmin(@RequestBody HospitalAdminRegistrationRequest request) {
         return superAdminService.registerHospitalAdmin(request);
     }
+
+    @PutMapping("/update/{id}")
+    public String updateAdmin(@PathVariable Long id, @RequestBody HospitalAdminRegistrationRequest request) {
+        return superAdminService.updateHospitalAdmin(id, request);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public String deleteAdmin(@PathVariable Long id) {
+        return superAdminService.deleteHospitalAdmin(id);
+    }
+
+    @GetMapping("/all")
+    public java.util.List<com.hospital.queue_backend.entity.HospitalAdmin> getAllAdmins() {
+        return superAdminService.getAllAdmins();
+    }
 }

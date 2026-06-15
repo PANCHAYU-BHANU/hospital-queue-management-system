@@ -11,4 +11,5 @@ public class DoctorRegistrationRequest {
     private String specialization;
     private String roomNumber;
     private Long hospitalId;
+    private Boolean isAvailable;
 }

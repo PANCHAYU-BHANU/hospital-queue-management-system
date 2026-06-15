@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface QueueRepository extends JpaRepository<Queue, Long>{
+public interface QueueRepository extends JpaRepository<Queue, Long> {
 
     // ◄ මෙන්න මේ මෙතඩ් එකේ @Query එකයි parameters දෙකයි හරියටම මෙහෙම හදන්න මචන්:
     @Query("SELECT COALESCE(MAX(q.tokenNumber), 0) FROM Queue q WHERE q.doctor.id = :doctorId AND q.queueType = :queueType AND CAST(q.createdAt AS date) = CURRENT_DATE")
@@ -19,17 +19,20 @@ public interface QueueRepository extends JpaRepository<Queue, Long>{
     @Query("SELECT q FROM Queue q WHERE q.doctor.id = :doctorId AND CAST(q.createdAt AS date) = CURRENT_DATE ORDER BY q.tokenNumber ASC")
     List<Queue> findTodayQueueForDoctor(@Param("doctorId") Long doctorId);
 
-    // අද දවසේ තවමත් පෝලිමේ ඉන්න (PENDING) ලෙඩ්ඩුන්ව ටයිප් එක අනුව විතරක් ගන්න (2:1 ලොජික් එකට ඕනේ වෙනවා)
+    // අද දවසේ තවමත් පෝලිමේ ඉන්න (PENDING) ලෙඩ්ඩුන්ව ටයිප් එක අනුව විතරක් ගන්න (2:1
+    // ලොජික් එකට ඕනේ වෙනවා)
     @Query("SELECT q FROM Queue q WHERE q.doctor.id = :doctorId AND q.queueType = :queueType AND q.status = 'PENDING' AND CAST(q.createdAt AS date) = CURRENT_DATE ORDER BY q.tokenNumber ASC")
     List<Queue> findPendingQueueByType(@Param("doctorId") Long doctorId, @Param("queueType") String queueType);
 
-    // අද දවසේ ඇපෘවල් බලාපොරොත්තුවෙන් ඉන්න (PENDING_APPROVAL) ඔක්කොම ලෙඩ්ඩුන්ගේ ලිස්ට් එක ගැනීම
+    // අද දවසේ ඇපෘවල් බලාපොරොත්තුවෙන් ඉන්න (PENDING_APPROVAL) ඔක්කොම ලෙඩ්ඩුන්ගේ
+    // ලිස්ට් එක ගැනීම
     @Query("SELECT q FROM Queue q WHERE q.status = 'PENDING_APPROVAL' AND CAST(q.createdAt AS date) = CURRENT_DATE ORDER BY q.id ASC")
     List<Queue> findTodayPendingApprovals();
 
     // අද දවසේ COMPLETED වුණු අවසාන රෝගීන් 5 දෙනාගේ විස්තර (Average Wait Time ගණනයට)
     @Query("SELECT q FROM Queue q WHERE q.doctor.id = :doctorId AND q.status = 'COMPLETED' AND CAST(q.createdAt AS date) = CURRENT_DATE ORDER BY q.consultationEndTime DESC")
-    List<Queue> findTop5CompletedToday(@Param("doctorId") Long doctorId, org.springframework.data.domain.Pageable pageable);
+    List<Queue> findTop5CompletedToday(@Param("doctorId") Long doctorId,
+            org.springframework.data.domain.Pageable pageable);
 
     // දොස්තර කෙනෙක්ගේ පෝලිමේ දැනට ඉන්න ගාන
     @Query("SELECT COUNT(q) FROM Queue q WHERE q.doctor.id = :doctorId AND (q.status = 'PENDING' OR q.status = 'IN_CONSULTATION') AND CAST(q.createdAt AS date) = CURRENT_DATE")
