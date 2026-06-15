@@ -26,4 +26,16 @@ public interface QueueRepository extends JpaRepository<Queue, Long>{
     // අද දවසේ ඇපෘවල් බලාපොරොත්තුවෙන් ඉන්න (PENDING_APPROVAL) ඔක්කොම ලෙඩ්ඩුන්ගේ ලිස්ට් එක ගැනීම
     @Query("SELECT q FROM Queue q WHERE q.status = 'PENDING_APPROVAL' AND CAST(q.createdAt AS date) = CURRENT_DATE ORDER BY q.id ASC")
     List<Queue> findTodayPendingApprovals();
+
+    // අද දවසේ COMPLETED වුණු අවසාන රෝගීන් 5 දෙනාගේ විස්තර (Average Wait Time ගණනයට)
+    @Query("SELECT q FROM Queue q WHERE q.doctor.id = :doctorId AND q.status = 'COMPLETED' AND CAST(q.createdAt AS date) = CURRENT_DATE ORDER BY q.consultationEndTime DESC")
+    List<Queue> findTop5CompletedToday(@Param("doctorId") Long doctorId, org.springframework.data.domain.Pageable pageable);
+
+    // දොස්තර කෙනෙක්ගේ පෝලිමේ දැනට ඉන්න ගාන
+    @Query("SELECT COUNT(q) FROM Queue q WHERE q.doctor.id = :doctorId AND (q.status = 'PENDING' OR q.status = 'IN_CONSULTATION') AND CAST(q.createdAt AS date) = CURRENT_DATE")
+    long countPendingQueueForDoctor(@Param("doctorId") Long doctorId);
+
+    // පේෂන්ට් කෙනෙක්ට දැනට තියෙන සක්‍රීය ටෝකන් එක ගන්න (User ID එකෙන්)
+    @Query("SELECT q FROM Queue q WHERE q.patient.user.id = :userId AND (q.status = 'PENDING' OR q.status = 'PENDING_APPROVAL' OR q.status = 'IN_CONSULTATION') AND CAST(q.createdAt AS date) = CURRENT_DATE")
+    java.util.Optional<Queue> findActiveQueueByUserId(@Param("userId") Long userId);
 }

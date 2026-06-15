@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { loginUser } from '../services/api'; // ◄ අපි හදපු API සර්විස් එක ගත්තා
 
-function Login({ onLoginSuccess, onSwitchToRegister }) {
+function Login({ onLoginSuccess, onSwitchToRegister, onSwitchToPublic }) {
     const [nicNumber, setNicNumber] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(''); // එරර් මැසේජ් පෙන්වන්න
@@ -96,6 +96,19 @@ function Login({ onLoginSuccess, onSwitchToRegister }) {
                             Register Here
                         </button>
                     </p>
+                    <div className="mt-4 pt-4 border-t border-slate-100">
+                        <button
+                            type="button"
+                            onClick={onSwitchToPublic}
+                            className="flex items-center justify-center w-full gap-2 px-4 py-2.5 text-sm font-bold text-teal-700 transition bg-teal-50 border border-teal-100 rounded-xl hover:bg-teal-100"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                            </svg>
+                            View Live Queue Status
+                        </button>
+                    </div>
                 </div>
 
             </div>

@@ -19,7 +19,7 @@ public class QueueController {
 
     // ටෝකන් එකක් ගන්න ලින්ක් එක (දැන් specialNeed එකත් json එකෙන් එවන්න ඕනේ)
     @PostMapping("/generate")
-    public String generateToken(@RequestBody QueueGenerateRequest request) {
+    public QueueResponse generateToken(@RequestBody QueueGenerateRequest request) {
         return queueService.generateToken(request);
     }
 
@@ -42,5 +42,25 @@ public class QueueController {
     @GetMapping("/pending-approvals")
     public List<QueueResponse> getPendingApprovals() {
         return queueService.getPendingApprovals();
+    }
+
+    @PutMapping("/leave/{queueId}")
+    public String leaveQueue(@PathVariable Long queueId) {
+        return queueService.leaveQueue(queueId);
+    }
+
+    @GetMapping("/estimate-wait-time/{doctorId}")
+    public String getEstimatedWaitTime(@PathVariable Long doctorId) {
+        return queueService.getEstimatedWaitTime(doctorId);
+    }
+
+    @PostMapping("/offline-generate")
+    public String generateOfflineToken(@RequestBody com.hospital.queue_backend.dto.request.OfflineQueueRequest request) {
+        return queueService.generateOfflineToken(request);
+    }
+
+    @GetMapping("/active/{userId}")
+    public QueueResponse getActiveTicket(@PathVariable Long userId) {
+        return queueService.getActiveTicketForUser(userId);
     }
 }

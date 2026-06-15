@@ -1,0 +1,22 @@
+package com.hospital.queue_backend.controller;
+
+import com.hospital.queue_backend.dto.request.HospitalAdminRegistrationRequest;
+import com.hospital.queue_backend.service.SuperAdminService;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/superadmin")
+@CrossOrigin(origins = "http://localhost:5173")
+public class SuperAdminController {
+
+    private final SuperAdminService superAdminService;
+
+    public SuperAdminController(SuperAdminService superAdminService) {
+        this.superAdminService = superAdminService;
+    }
+
+    @PostMapping("/register-admin")
+    public String registerAdmin(@RequestBody HospitalAdminRegistrationRequest request) {
+        return superAdminService.registerHospitalAdmin(request);
+    }
+}

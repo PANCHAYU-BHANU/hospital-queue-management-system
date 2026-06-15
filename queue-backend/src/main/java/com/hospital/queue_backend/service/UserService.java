@@ -6,19 +6,34 @@ import com.hospital.queue_backend.repository.PatientRepository;
 import com.hospital.queue_backend.repository.UserRepository;
 import com.hospital.queue_backend.dto.request.PatientRegistrationRequest;
 import com.hospital.queue_backend.dto.request.UserLoginRequest;
+import com.hospital.queue_backend.repository.HospitalAdminRepository;
+import com.hospital.queue_backend.entity.HospitalAdmin;
+import com.hospital.queue_backend.repository.DoctorRepository;
+import com.hospital.queue_backend.entity.Doctor;
+import com.hospital.queue_backend.repository.CounterStaffRepository;
+import com.hospital.queue_backend.entity.CounterStaff;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Optional;
 
 @Service
 public class UserService  {
 
     private final UserRepository userRepository;
     private final PatientRepository patientRepository;
+    private final HospitalAdminRepository hospitalAdminRepository;
+    private final DoctorRepository doctorRepository;
+    private final CounterStaffRepository counterStaffRepository;
 
-    // Constructor Injection (Autowired වෙනුවට industry එකේ පාවිච්චි කරන්නේ මේකයි)
-    public UserService(UserRepository userRepository, PatientRepository patientRepository) {
+    public UserService(UserRepository userRepository, PatientRepository patientRepository,
+                       HospitalAdminRepository hospitalAdminRepository,
+                       DoctorRepository doctorRepository,
+                       CounterStaffRepository counterStaffRepository) {
         this.userRepository = userRepository;
         this.patientRepository = patientRepository;
+        this.hospitalAdminRepository = hospitalAdminRepository;
+        this.doctorRepository = doctorRepository;
+        this.counterStaffRepository = counterStaffRepository;
     }
 
     @Transactional // වැරදීමක් වුණොත් ටේබල් දෙකටම ඩේටා නොදා Rollback කරන්න
@@ -68,6 +83,25 @@ public class UserService  {
         }
 
         // 3. හැමදේම හරි නම් එයාගේ Role එකත් එක්ක Success කියලා යවනවා
-        return "Login Successful! Role: " + user.getRole();
+        String response = "Login Successful! Role: " + user.getRole() + ", UserId: " + user.getId();
+        
+        if (user.getRole().equals("ROLE_ADMIN")) {
+            Optional<HospitalAdmin> admin = hospitalAdminRepository.findByUser(user);
+            if (admin.isPresent()) {
+                response += ", HospitalId: " + admin.get().getHospital().getId();
+            }
+        } else if (user.getRole().equals("ROLE_DOCTOR")) {
+            Optional<Doctor> doc = doctorRepository.findByUser(user);
+            if (doc.isPresent() && doc.get().getHospital() != null) {
+                response += ", HospitalId: " + doc.get().getHospital().getId();
+            }
+        } else if (user.getRole().equals("ROLE_COUNTER")) {
+            Optional<CounterStaff> staff = counterStaffRepository.findByUser(user);
+            if (staff.isPresent() && staff.get().getHospital() != null) {
+                response += ", HospitalId: " + staff.get().getHospital().getId();
+            }
+        }
+        
+        return response;
     }
 }

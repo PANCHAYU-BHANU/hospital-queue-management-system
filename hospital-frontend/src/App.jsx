@@ -5,10 +5,14 @@ import Sidebar from './components/Sidebar';
 import PatientDashboard from './dashboards/PatientDashboard';
 import DoctorDashboard from './dashboards/DoctorDashboard';
 import CounterDashboard from './dashboards/CounterDashboard';
+import AdminDashboard from './dashboards/AdminDashboard';
+import SuperAdminDashboard from './dashboards/SuperAdminDashboard';
+import PublicDashboard from './dashboards/PublicDashboard';
 
 function App() {
   const [user, setUser] = useState(null);
   const [isRegisterPage, setIsRegisterPage] = useState(false);
+  const [isPublicPage, setIsPublicPage] = useState(false);
 
   // 🛠️ Backend එකෙන් එන මැසේජ් එක නිවැරදිව ෆිල්ටර් කරමු
   const handleLoginSuccess = (backendMessage) => {
@@ -19,19 +23,39 @@ function App() {
       throw backendMessage; 
     }
 
-    let assignedRole = 'PATIENT';
-    
-    if (backendMessage.includes('ROLE_DOCTOR')) {
-      assignedRole = 'DOCTOR';
-    } else if (backendMessage.includes('ROLE_COUNTER')) {
-      assignedRole = 'COUNTER';
-    } else if (backendMessage.includes('ROLE_PATIENT')) {
-      assignedRole = 'PATIENT';
+    let assignedRole = 'PATIENT'; // Default
+    let hospitalId = null;
+
+  if (backendMessage.includes('ROLE_SUPER_ADMIN')) {
+    assignedRole = 'SUPER_ADMIN';
+  } else if (backendMessage.includes('ROLE_ADMIN')) {
+    assignedRole = 'ADMIN';
+  } else if (backendMessage.includes('ROLE_DOCTOR')) {
+    assignedRole = 'DOCTOR'; //
+  } else if (backendMessage.includes('ROLE_COUNTER')) {
+    assignedRole = 'COUNTER'; //
+  } else if (backendMessage.includes('ROLE_PATIENT')) {
+    assignedRole = 'PATIENT'; //
+  }
+
+    // Extract HospitalId if present
+    const hospitalMatch = backendMessage.match(/HospitalId: (\d+)/);
+    if (hospitalMatch) {
+      hospitalId = parseInt(hospitalMatch[1]);
+    }
+
+    // Extract UserId
+    let userId = null;
+    const userMatch = backendMessage.match(/UserId: (\d+)/);
+    if (userMatch) {
+      userId = parseInt(userMatch[1]);
     }
 
     setUser({
+      id: userId,
       role: assignedRole,
-      fullName: assignedRole === 'DOCTOR' ? 'Doctor User' : assignedRole === 'COUNTER' ? 'Counter Staff' : 'Patient User'
+      hospitalId: hospitalId,
+      fullName: assignedRole === 'SUPER_ADMIN' ? 'Super Admin' : assignedRole === 'DOCTOR' ? 'Doctor' : assignedRole === 'COUNTER' ? 'Counter Staff' : assignedRole === 'ADMIN' ? 'Admin' : 'Patient'
     });
   };
 
@@ -45,11 +69,16 @@ function App() {
       return <Register onSwitchToLogin={() => setIsRegisterPage(false)} />;
     }
     
+    if (isPublicPage) {
+      return <PublicDashboard onBackToLogin={() => setIsPublicPage(false)} />;
+    }
+    
     // ලොගින් පේජ් එකට අපේ Register එකට මාරු වෙන ලින්ක් එක පාස් කරනවා
     return (
       <Login 
         onLoginSuccess={handleLoginSuccess} 
         onSwitchToRegister={() => setIsRegisterPage(true)} 
+        onSwitchToPublic={() => setIsPublicPage(true)}
       />
     );
   }
@@ -68,6 +97,10 @@ function App() {
           <PatientDashboard user={user} />
         ) : user.role === 'DOCTOR' ? (
           <DoctorDashboard user={user} />
+        ) : user.role === 'SUPER_ADMIN' ? (
+          <SuperAdminDashboard user={user} />
+        ) : user.role === 'ADMIN' ? (
+          <AdminDashboard user={user} />
         ) : user.role === 'COUNTER' ? (
           <CounterDashboard user={user} /> // ◄ ඔන්න Counter එකත් ගින්දර වගේ වැදුණා!
         ) : (

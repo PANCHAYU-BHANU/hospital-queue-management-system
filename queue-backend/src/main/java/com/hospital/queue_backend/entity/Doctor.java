@@ -28,4 +28,8 @@ public class Doctor {
     private String roomNumber; // බලාගන්නා කාමර අංකය හෝ කවුන්ටරය
 
     private boolean isAvailable; // දැනට රෝගීන් බලනවාද නැද්ද (Active/Inactive)
+
+    @ManyToOne
+    @JoinColumn(name = "hospital_id", referencedColumnName = "id")
+    private Hospital hospital; // රෝහල
 }

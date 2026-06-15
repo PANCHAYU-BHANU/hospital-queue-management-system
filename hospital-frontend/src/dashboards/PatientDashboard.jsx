@@ -1,185 +1,241 @@
 import React, { useState, useEffect } from 'react';
 
+// 💡 App.jsx එකෙන් එන 'user' ප්‍රොප් එක මෙතනට ගන්නවා
 function PatientDashboard({ user }) {
-  // 💡 ඔයාගේ dropdown එකේ පේන්න තියෙන text එකම value එක විදියට සෙට් කළා මචන්
-  const [department, setDepartment] = useState('OPD Room 01');
-  const [isPriority, setIsPriority] = useState(false);
-  const [myToken, setMyToken] = useState(null); 
+  const [selectedRoom, setSelectedRoom] = useState('OPD Room 01'); //
+  const [isPriorityChecked, setIsPriorityChecked] = useState(false); //
+  const [ticket, setTicket] = useState(null); // Active Ticket එක සෙට් කරන ස්ටේට් එක
   const [loading, setLoading] = useState(false);
-  
-  // 📢 Alerts වෙනුවට UI එක ඇතුළේම message පෙන්වන්න ස්ටේට් දෙකක්
-  const [successMsg, setSuccessMsg] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [error, setError] = useState(null);
+  const [waitTime, setWaitTime] = useState("Calculating...");
+  const [userLocation, setUserLocation] = useState(null);
 
-  // 🔄 1. ලෙඩාගේ ටෝකන් එකේ ලයිව් ස්ටේටස් එක ලෝඩ් කරන ලොජික් එක
-  const checkMyQueueStatus = async () => {
-    if (!user?.nicNumber) return;
+  // Get User Location on Load
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          });
+        },
+        (err) => console.log("Geolocation error:", err)
+      );
+    }
+  }, []);
+
+  // 🔄 පැනල් එක ලෝඩ් වෙද්දීම දැනට මේ පේෂන්ට්ගේ Active ටෝකන් එකක් තියෙනවද කියලා බලන්න පුළුවන් (Optional)
+  useEffect(() => {
+    if (user && user.id) {
+      fetchActiveTicket();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (ticket && ticket.doctor) {
+      fetchWaitTime(ticket.doctor.id);
+      const interval = setInterval(() => fetchWaitTime(ticket.doctor.id), 60000); // Check every minute
+      return () => clearInterval(interval);
+    }
+  }, [ticket]);
+
+  const fetchWaitTime = async (doctorId) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/queue/patient/${user.nicNumber}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.length > 0) {
-          setMyToken(data[0]); 
-        }
-      }
-    } catch (error) {
-      console.error("Status load error:", error);
+      const res = await fetch(`http://localhost:8080/api/queue/estimate-wait-time/${doctorId}`);
+      const text = await res.text();
+      setWaitTime(text);
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  useEffect(() => {
-    checkMyQueueStatus();
-    const interval = setInterval(checkMyQueueStatus, 5000);
-    return () => clearInterval(interval);
-  }, [user?.nicNumber]);
+  // 📡 පේෂන්ට්ගේ දැනට තියෙන සක්‍රීය ටෝකන් එක ඇදලා ගන්නා මෙතඩ් එක
+  const fetchActiveTicket = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/queue/active/${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setTicket(data);
+      }
+    } catch (err) {
+      console.error("Error fetching active ticket:", err);
+    }
+  };
 
+  // 🎟️ GET LIVE TOKEN 🚀 බටන් එක ක්ලික් කරද්දී රන් වෙන මෙතඩ් එක
+  const handleGetToken = async () => {
+    setError(null);
 
-  // 🚀 2. "Get Live Token" බටන් එක එබුවාම ක්‍රියාත්මක වෙන ලොජික් එක
-  const handleJoinQueue = async (e) => {
-    e.preventDefault();
+    // 1. ලොග් වෙලා ඉන්න යූසර්ගේ ID එක චෙක් කරනවා
+    if (!user || !user.id) {
+      setError("යූසර්ගේ ID එක ලැබිලා නෑ මචන්! කරුණාකර නැවත ලොග් වෙන්න.");
+      return;
+    }
+
     setLoading(true);
-    setSuccessMsg('');
-    setErrorMsg('');
 
-    const queueRequest = {
-      patientNic: user?.nicNumber || "200109202793",
-      patientName: user?.fullName || "Panchayu Mihisara",
-      department: department, // eg: "OPD Room 01"
-      isPriority: isPriority
+    // 2. බැක්එන්ඩ් එකේ QueueGenerateRequest එකට හරියටම ගැලපෙන්න හැදූ බොඩි එක
+    const tokenRequestData = {
+      userId: user.id,               // 👈 ලොග් වුණු පේෂන්ට්ගේ ID එක (User Object එකෙන්)
+      doctorId: 1,                      // 👈 දැනට ඩේටාබේස් එකේ ඉන්න දොස්තරගේ ID එක (Default: 1)
+      isSpecialNeed: isPriorityChecked,  // 👈 බැක්එන්ඩ් එකේ තියෙන විදියටම 'isSpecialNeed' (true/false)
+      latitude: userLocation ? userLocation.lat : null,
+      longitude: userLocation ? userLocation.lon : null
     };
 
     try {
       const response = await fetch('http://localhost:8080/api/queue/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(queueRequest),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(tokenRequestData), // 👈 JSON කරලා යැව්වා
       });
 
       if (response.ok) {
-        const tokenData = await response.json();
-        setMyToken(tokenData);
-        setSuccessMsg('ටෝකන් එක සාර්ථකව ලබාගත්තා මචන්! 🎉');
-        
-        // තත්පර 4කින් සාර්ථකයි කියන මැසේජ් එක ඔටෝ අයින් කරනවා
-        setTimeout(() => setSuccessMsg(''), 4000);
+        const activeTicket = await response.json();
+        setTicket(activeTicket); // 👈 ආපු ටෝකන් ඩේටා ටික දකුණු පැත්තේ කාඩ් එකට සෙට් කළා
+        alert("ටෝකන් එක සාර්ථකව ගත්තා මචන්! 🎟️✅");
       } else {
-        // ❌ අර කැත Alert එක වෙනුවට මෙතනදී රතු පාටින් UI එකේම පෙන්වනවා
-        setErrorMsg('ටෝකන් එක ගන්න බැරි වුණා මචන්. සමහරවිට ඔයා දැනටමත් පෝලිමක ඇති! ⚠️');
+        const errText = await response.text();
+        setError(errText || "ටෝකන් එක ගන්න බැරි වුණා. සමහරවිට ඔයා දැනටමත් පෝලිමක ඇති!");
       }
-    } catch (error) {
-      console.error("Queue generate error:", error);
-      setErrorMsg('බැක්එන්ඩ් එක සම්බන්ධ කරගන්න බැරි වුණා මචන්! 🔌');
+    } catch (err) {
+      setError("Server එකට සම්බන්ධ වෙන්න බැහැ මචන්! Backend එක Run වෙනවද බලන්න.");
+      console.error("Token generation failed:", err);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleLeaveQueue = async () => {
+    if (!ticket) return;
+    if (window.confirm("Are you sure you want to leave the queue?")) {
+      try {
+        const res = await fetch(`http://localhost:8080/api/queue/leave/${ticket.id}`, {
+          method: 'PUT'
+        });
+        const text = await res.text();
+        if (res.ok) {
+          alert(text);
+          setTicket(null); // Clear ticket
+        } else {
+          alert("Failed to leave queue.");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
   return (
-    <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2">
+    <div className="grid min-h-screen grid-cols-1 gap-8 p-8 lg:grid-cols-12 bg-slate-50">
       
-      {/* ➕ Card 1: Request New Token */}
-      <div className="p-6 space-y-6 bg-white border shadow-sm md:p-8 rounded-3xl border-slate-200/60">
-        <h3 className="flex items-center gap-2 pb-3 text-xl font-black border-b text-slate-800 border-slate-100">
-          <span className="text-teal-600">➕</span> Request New Token
-        </h3>
+      {/* 🟣 වම් පැත්ත: REQUEST NEW TOKEN FORM */}
+      <div className="p-8 space-y-6 bg-white border shadow-sm lg:col-span-6 rounded-3xl border-slate-200 h-fit">
+        <div className="flex items-center space-x-3">
+          <span className="text-2xl">➕</span>
+          <h3 className="text-2xl font-black text-slate-800">Request New Token</h3>
+        </div>
 
-        <form onSubmit={handleJoinQueue} className="space-y-5">
-          <div>
-            <label className="block mb-2 text-xs font-bold tracking-wider uppercase text-slate-400">Select Department / Clinic</label>
-            <select
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              className="w-full px-4 py-3 text-sm font-bold transition border rounded-xl border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-slate-50 text-slate-700"
-            >
-              {/* 💡 Backend එකේ බලාපොරොත්තු වෙන String එකම Value එකට දුන්නා මචන් */}
-              <option value="OPD Room 01">OPD Room 01 (සාමාන්‍ය රෝග)</option>
-              <option value="OPD Room 02">OPD Room 02 (උණ/කැස්ස)</option>
-              <option value="Dental Clinic">Dental Clinic (දන්ත සායනය)</option>
-            </select>
+        {/* ERROR MESSAGE DISPLAY */}
+        {error && (
+          <div className="p-4 text-sm font-bold border text-rose-700 bg-rose-50 rounded-xl border-rose-100">
+            ⚠️ {error}
           </div>
+        )}
 
-          {/* 🤰 Priority Checkbox */}
-          <div className="flex items-start gap-3 p-4 border bg-amber-50/50 border-amber-100 rounded-xl">
-            <input
-              type="checkbox"
-              id="priority"
-              checked={isPriority}
-              onChange={(e) => setIsPriority(e.target.checked)}
-              className="w-4 h-4 mt-1 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
-            />
-            <label htmlFor="priority" className="text-xs font-semibold cursor-pointer text-slate-600 selection:bg-transparent">
-              <span className="font-bold text-amber-700 block mb-0.5">Priority Booking (විශේෂ ප්‍රමුඛතාවය)</span>
-              ඔබ ගර්භණී මවක්, ආබාධිත හෝ වයස අවුරුදු 65ට වැඩි ජ්‍යෙෂ්ඨ පුරවැසියෙක් නම් පමණක් මෙය සක්‍රීය කරන්න.
-            </label>
-          </div>
-
-          {/* 🟢 Custom Success Message Indicator */}
-          {successMsg && (
-            <div className="p-3 text-xs font-bold text-center border bg-emerald-50 text-emerald-700 border-emerald-100 rounded-xl animate-fade-in">
-              {successMsg}
-            </div>
-          )}
-
-          {/* 🔴 Custom Error Message Indicator */}
-          {errorMsg && (
-            <div className="p-3 text-xs font-bold text-center border bg-rose-50 text-rose-600 border-rose-100 rounded-xl animate-pulse">
-              {errorMsg}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading || myToken !== null}
-            className="w-full py-3.5 bg-teal-600 hover:bg-teal-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold rounded-xl shadow-lg transition text-sm transform active:scale-[0.99]"
+        {/* DEPARTMENT SELECT */}
+        <div className="space-y-2">
+          <label className="text-xs font-bold uppercase text-slate-400">Select Department / Clinic</label>
+          <select 
+            className="w-full px-4 py-3 font-bold border outline-none rounded-xl border-slate-200 bg-slate-50 text-slate-700 focus:ring-2 focus:ring-teal-500"
+            value={selectedRoom}
+            onChange={(e) => setSelectedRoom(e.target.value)}
           >
-            {loading ? 'Processing...' : myToken ? 'You are already in a Queue' : 'Get Live Token 🚀'}
-          </button>
-        </form>
+            <option value="OPD Room 01">OPD Room 01 (සාමාන්‍ය රෝග)</option>
+            <option value="OPD Room 02">OPD Room 02</option>
+            <option value="Dental Clinic">Dental Clinic</option>
+          </select>
+        </div>
+
+        {/* PRIORITY BOOKING CHECKBOX */}
+        <div className="flex items-start p-4 space-x-3 border bg-amber-50/50 rounded-xl border-amber-100">
+          <input 
+            type="checkbox" 
+            id="priority"
+            className="w-4 h-4 mt-1 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+            checked={isPriorityChecked}
+            onChange={(e) => setIsPriorityChecked(e.target.checked)}
+          />
+          <label htmlFor="priority" className="text-xs font-medium leading-relaxed select-none text-slate-600">
+            <strong className="text-amber-700 block font-bold mb-0.5">Priority Booking (විශේෂ ප්‍රමුඛතාවය)</strong>
+            ඔබ ගර්භණී මවක්, ආබාධිත හෝ වයස අවුරුදු 65ට වැඩි ජ්‍යෙෂ්ඨ පුරවැසියෙක් නම් පමණක් මෙය සක්‍රීය කරන්න.
+          </label>
+        </div>
+
+        {/* SUBMIT BUTTON */}
+        <button 
+          onClick={handleGetToken}
+          disabled={loading}
+          className="flex items-center justify-center w-full py-4 space-x-2 font-black text-white transition duration-200 bg-teal-600 shadow-lg hover:bg-teal-700 rounded-xl shadow-teal-600/20"
+        >
+          <span>{loading ? "Processing..." : "Get Live Token 🚀"}</span>
+        </button>
       </div>
 
-      {/* 🎫 Card 2: Your Active Ticket */}
-      <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-200/60 shadow-sm flex flex-col justify-between min-h-[350px]">
-        <h3 className="flex items-center gap-2 pb-3 text-xl font-black border-b text-slate-800 border-slate-100">
-          <span className="text-teal-600">🎫</span> Your Active Ticket
-        </h3>
+      {/* 🎫 දකුණු පැත්ත: YOUR ACTIVE TICKET CARD */}
+      <div className="lg:col-span-6 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center items-center min-h-[350px]">
+        
+        {!ticket ? (
+          /* ටෝකන් එකක් නැති වෙලාවට පෙන්වන Screen එක */
+          <div className="max-w-sm space-y-4 text-center">
+            <span className="text-4xl">🎫</span>
+            <p className="text-sm font-bold leading-relaxed text-slate-400">
+              ඔබ තවමත් කිසිදු සායනයක් සඳහා ටෝකන් පතක් ලබාගෙන නැත මචන්.
+            </p>
+          </div>
+        ) : (
+          /* ටෝකන් එකක් සක්‍රීයව ඇති විට පෙන්වන ලස්සන Live Ticket එක 🎟️ */
+          <div className="w-full space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <h4 className="text-lg font-black text-slate-800">🎟️ Your Active Ticket</h4>
+              <span className={`px-3 py-1 rounded-full text-[10px] font-black ${
+                ticket.isSpecialNeed ? 'bg-amber-100 text-amber-700' : 'bg-teal-100 text-teal-700'
+              }`}>
+                {ticket.isSpecialNeed ? 'PRIORITY' : 'REGULAR'}
+              </span>
+            </div>
 
-        {myToken ? (
-          <div className="flex flex-col justify-center flex-1 my-6 space-y-4 text-center animate-fade-in">
-            <span className="block text-xs font-bold tracking-widest uppercase text-slate-400">Your Token Number</span>
-            <h2 className="font-black tracking-tight text-teal-600 text-7xl">#{myToken.tokenNumber}</h2>
-            
-            <div className="space-y-1">
-              <p className="text-sm font-bold text-slate-700">Clinic: <span className="text-teal-700">{myToken.department}</span></p>
-              <p className="text-xs font-semibold text-slate-400">Status: 
-                <span className={`ml-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
-                  myToken.status === 'PENDING' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                }`}>
-                  {myToken.status}
-                </span>
+            <div className="p-6 space-y-2 text-center text-white shadow-md bg-gradient-to-br from-teal-500 to-teal-700 rounded-2xl">
+              <p className="text-xs font-bold tracking-wider text-teal-100 uppercase">Your Token Number</p>
+              <h1 className="text-6xl font-black tracking-tight">{ticket.tokenNumber || 'T-00'}</h1>
+              <p className="pt-2 text-sm font-medium text-teal-50/80">
+                🏥 Room: <span className="font-bold">{ticket.roomNumber || 'OPD'}</span>
               </p>
             </div>
 
-            {myToken.status === 'PENDING' && (
-              <p className="text-[11px] text-amber-600 font-bold bg-amber-50 p-2 rounded-lg border border-amber-100 animate-pulse max-w-xs mx-auto mt-2">
-                ⏳ කරුණාකර කවුන්ටරය වෙත ගොස් ඔබේ ටෝකන් පත සක්‍රීය (Approve) කරගන්න මචන්.
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center flex-1 py-12 my-auto space-y-2 text-sm font-medium text-center text-slate-400">
-            <span className="block mb-2 text-4xl">🎟️</span>
-            <p className="px-6 text-slate-500">ඔබ තවමත් කිසිදු සායනයක් සඳහා ටෝකන් පතක් ලබාගෙන නැත මචන්.</p>
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div className="p-4 border bg-slate-50 rounded-xl border-slate-100">
+                <span className="block mb-1 text-xs font-bold text-slate-400">Current Queue No</span>
+                <span className="text-xl font-black text-slate-700">{ticket.currentNumber || '0'}</span>
+              </div>
+              <div className="p-4 border bg-slate-50 rounded-xl border-slate-100">
+                <span className="block mb-1 text-xs font-bold text-slate-400">Estimated Wait</span>
+                <span className="text-xl font-black text-teal-600">{waitTime}</span>
+              </div>
+            </div>
+            
+            <button 
+              onClick={handleLeaveQueue}
+              className="w-full mt-4 py-3 font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition"
+            >
+              Leave Queue
+            </button>
           </div>
         )}
 
-        {myToken && (
-          <button
-            onClick={() => setMyToken(null)} 
-            className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition text-xs mt-4"
-          >
-            Leave Queue / Reset
-          </button>
-        )}
       </div>
 
     </div>

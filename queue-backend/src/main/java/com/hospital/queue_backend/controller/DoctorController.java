@@ -18,4 +18,9 @@ public class DoctorController {
     public String registerDoctor(@RequestBody DoctorRegistrationRequest request) {
         return doctorService.registerDoctor(request);
     }
+
+    @GetMapping("/all")
+    public java.util.List<com.hospital.queue_backend.dto.response.DoctorResponse> getAllDoctors() {
+        return doctorService.getAllDoctors();
+    }
 }

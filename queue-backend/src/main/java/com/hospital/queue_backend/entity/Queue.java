@@ -36,6 +36,14 @@ public class Queue {
 
     private java.time.LocalDateTime createdAt; // පෝලිමට එකතු වුණු වෙලාව
 
+    private java.time.LocalDateTime consultationStartTime; // වෛද්‍යවරයා හමුවීම ආරම්භ කළ වෙලාව
+
+    private java.time.LocalDateTime consultationEndTime; // වෛද්‍යවරයා හමුවීම අවසන් කළ වෙලාව
+
+    @ManyToOne
+    @JoinColumn(name = "hospital_id", referencedColumnName = "id")
+    private Hospital hospital; // රෝහල
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = java.time.LocalDateTime.now(); // Record එක හැදෙද්දිම Time එක auto වැටෙනවා

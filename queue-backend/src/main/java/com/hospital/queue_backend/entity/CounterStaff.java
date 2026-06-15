@@ -24,4 +24,8 @@ public class CounterStaff {
 
     @Column(nullable = false)
     private String counterNumber; // අදාළ කවුන්ටර් අංකය (උදා: Counter 1)
+
+    @ManyToOne
+    @JoinColumn(name = "hospital_id", referencedColumnName = "id")
+    private Hospital hospital; // රෝහල
 }

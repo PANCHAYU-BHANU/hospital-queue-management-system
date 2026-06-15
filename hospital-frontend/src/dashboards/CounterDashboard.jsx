@@ -1,102 +1,235 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function CounterDashboard({ user }) {
-  // 🎟️ Counter එකට Approve කරන්න ඇවිත් තියෙන Online Tokens (Pending)
-  const [pendingTokens, setPendingTokens] = useState([
-    { token: '#12', name: "Suresh Perera", type: "Online Request", status: "Pending" },
-    { token: '#13', name: "Nimali Rathnayake", type: "Online Request", status: "Pending" }
-  ]);
+  const [pendingTokens, setPendingTokens] = useState([]);
+  const [actionLoading, setActionLoading] = useState(null); 
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  
+  // Offline Registration State
+  const [offlineNic, setOfflineNic] = useState('');
+  const [offlineName, setOfflineName] = useState('');
+  const [offlineAge, setOfflineAge] = useState('');
+  const [offlineGender, setOfflineGender] = useState('Male');
+  const [offlinePriority, setOfflinePriority] = useState(false);
+  const [offlineLoading, setOfflineLoading] = useState(false);
 
-  const handleApprove = (tokenToApprove) => {
-    setPendingTokens(pendingTokens.filter(t => t.token !== tokenToApprove));
-    alert(`Token ${tokenToApprove} Approved & Added to Live Queue!`);
+  // 🔄 1. Pending Approvals Backend එකෙන් ගන්න ලොජික් එක
+  const fetchPendingApprovals = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/api/queue/pending-approvals');
+      if (response.ok) {
+        const data = await response.json();
+        setPendingTokens(data);
+      } else {
+        setErrorMsg('Pending ලිස්ට් එක ලෝඩ් කරගන්න බැරි වුණා මචන්.');
+      }
+    } catch (error) {
+      console.error("Fetch pending error:", error);
+      setErrorMsg('සර්වර් එක කනෙක්ට් නෑ මචන්! 🔌');
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingApprovals();
+    const interval = setInterval(fetchPendingApprovals, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // 🚀 2. "Approve" බටන් එක
+  const handleApprove = async (queueId) => {
+    setActionLoading(queueId);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/queue/approve/${queueId}`, {
+        method: 'PUT',
+      });
+
+      if (response.ok) {
+        setSuccessMsg(`ටෝකන් එක සාර්ථකව Approve කළා මචන්! ✅`);
+        fetchPendingApprovals();
+        setTimeout(() => setSuccessMsg(''), 3000);
+      } else {
+        setErrorMsg('ටෝකන් එක Approve කරන්න බැරි වුණා.');
+      }
+    } catch (error) {
+      console.error("Approve error:", error);
+      setErrorMsg('සර්වර් එකේ අවුලක් මචන්!');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // 📝 3. Offline Patient Registration
+  const handleOfflineRegistration = async (e) => {
+    e.preventDefault();
+    setOfflineLoading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    const requestData = {
+      nicNumber: offlineNic,
+      fullName: offlineName,
+      age: parseInt(offlineAge),
+      gender: offlineGender,
+      doctorId: 1, // Default OPD doctor
+      isSpecialNeed: offlinePriority
+    };
+
+    try {
+      const response = await fetch('http://localhost:8080/api/queue/offline-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestData)
+      });
+      const text = await response.text();
+      if (response.ok) {
+        setSuccessMsg(`✅ ${text}`);
+        setOfflineNic('');
+        setOfflineName('');
+        setOfflineAge('');
+        setOfflinePriority(false);
+        fetchPendingApprovals();
+      } else {
+        setErrorMsg('Error: ' + text);
+      }
+    } catch (err) {
+      setErrorMsg('Server Error!');
+      console.error(err);
+    } finally {
+      setOfflineLoading(false);
+    }
   };
 
   return (
-    <div className="w-full space-y-6">
-      {/* 💳 Counter Header - Updated to Teal Gradient to match other dashboards */}
-      <div className="p-6 text-white border shadow-lg bg-gradient-to-r from-teal-700 to-slate-800 rounded-2xl border-teal-600/20">
-        <h2 className="text-2xl font-bold">Welcome, {user?.fullName || 'Counter Staff'}!</h2>
-        <p className="mt-1 text-sm font-medium text-teal-100">
-          Main Registration Desk | Patient Verification Panel
-        </p>
-      </div>
+    <div className="w-full space-y-8">
+      
+      {/* 📢 Live Feedback Notifications */}
+      {successMsg && (
+        <div className="p-4 text-sm font-bold text-center border shadow-sm bg-emerald-50 text-emerald-700 border-emerald-100 rounded-2xl animate-fade-in">
+          {successMsg}
+        </div>
+      )}
+      {errorMsg && (
+        <div className="p-4 text-sm font-bold text-center border shadow-sm bg-rose-50 text-rose-600 border-rose-100 rounded-2xl animate-pulse">
+          {errorMsg}
+        </div>
+      )}
 
-      <div className="grid gap-6 md:grid-cols-3">
-        
-        {/* 📝 Left Side: Walk-in Patient Registration Form */}
-        <div className="p-6 bg-white border shadow-xl rounded-2xl border-slate-100 md:col-span-1">
-          <h3 className="flex items-center gap-2 mb-4 text-lg font-bold text-slate-800">
-            <span className="text-teal-600">➕</span> Walk-in Token Issue
+      {/* 📋 Pending Approvals Table Card */}
+      <div className="overflow-hidden bg-white border shadow-sm rounded-3xl border-slate-200/60">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/50">
+          <h3 className="flex items-center gap-2 text-lg font-black text-slate-800">
+            <span className="text-teal-600">⏳</span> Token Approval Queue List
           </h3>
-          <p className="mb-4 text-xs font-semibold text-slate-400">Phone එකක් නැතුව කෙලින්ම හොස්පිට්ල් එකට එන ලෙඩ්ඩුන්ව ඇතුළත් කරන්න මචන්.</p>
-          
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-            <div>
-              <label className="block text-sm font-semibold text-slate-600 mb-1.5">Patient NIC / Phone</label>
-              <input 
-                type="text" 
-                placeholder="Enter NIC Number"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-slate-50 transition font-medium text-slate-700"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-600 mb-1.5">Select Department</label>
-              <select className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-slate-50 transition font-medium text-slate-700">
-                <option>OPD Room 01</option>
-                <option>OPD Room 02</option>
-                <option>Dental Clinic</option>
-              </select>
-            </div>
-            {/* Button changed to Teal */}
-            <button className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-md transition transform active:scale-[0.99]">
-              Issue Walk-in Token
-            </button>
-          </form>
+          <button 
+            onClick={fetchPendingApprovals}
+            className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition"
+          >
+            🔄 Refresh List
+          </button>
         </div>
 
-        {/* 📋 Right Side: Online Token Approvals List */}
-        <div className="p-6 bg-white border shadow-xl rounded-2xl border-slate-100 md:col-span-2">
-          <h3 className="flex items-center justify-between mb-4 text-lg font-bold text-slate-800">
-            <span className="flex items-center gap-2"><span>⏳</span> Online Token Requests</span>
-            <span className="text-xs bg-amber-50 text-amber-600 border border-amber-100 px-2.5 py-1 rounded-full font-bold">
-              {pendingTokens.length} Pending Verification
-            </span>
-          </h3>
-
-          <div className="space-y-3">
-            {pendingTokens.length === 0 ? (
-              <p className="py-12 text-sm font-medium text-center text-slate-400">No pending online requests at the moment!</p>
-            ) : (
-              pendingTokens.map((patient, index) => (
-                <div key={index} className="flex items-center justify-between p-4 transition border bg-slate-50 border-slate-100 rounded-xl hover:bg-slate-100/80">
-                  <div className="flex items-center gap-4">
-                    {/* Token bubble changed to Teal text & Slate/Teal soft bg */}
-                    <span className="flex items-center justify-center w-12 h-12 text-lg font-black text-teal-600 bg-white border shadow-sm rounded-xl border-slate-100">
-                      {patient.token}
-                    </span>
-                    <div>
-                      <p className="font-bold text-slate-700">{patient.name}</p>
-                      <p className="text-xs font-semibold text-slate-400">{patient.type}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    {/* Button changed to Emerald to match operational approvals */}
-                    <button 
-                      onClick={() => handleApprove(patient.token)}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition shadow-sm transform active:scale-[0.97]"
-                    >
-                      Approve & Queue
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
+        {pendingTokens.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="text-xs font-bold tracking-wider uppercase border-b border-slate-100 text-slate-400 bg-slate-50/30">
+                  <th className="px-6 py-4">Token No</th>
+                  <th className="px-6 py-4">Patient Name</th>
+                  <th className="px-6 py-4">NIC Number</th>
+                  <th className="px-6 py-4">Department</th>
+                  <th className="px-6 py-4">Priority</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm font-medium divide-y divide-slate-100 text-slate-700">
+                {pendingTokens.map((token) => (
+                  <tr key={token.id} className="transition hover:bg-slate-50/80">
+                    <td className="px-6 py-4">
+                      <span className="px-3 py-1 text-xs font-black text-teal-700 rounded-lg bg-teal-50">
+                        #{token.tokenNumber}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 font-bold text-slate-800">{token.patientName}</td>
+                    <td className="px-6 py-4 font-mono text-xs text-slate-500">{token.patientNic}</td>
+                    <td className="px-6 py-4">
+                      <span className="font-semibold text-slate-600">{token.department}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {token.isPriority ? (
+                        <span className="px-2 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-black rounded uppercase tracking-wider">
+                          ⚠️ HIGH
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 bg-slate-100 text-slate-400 text-[10px] font-bold rounded uppercase">
+                          Normal
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleApprove(token.id)}
+                        disabled={actionLoading === token.id}
+                        className="px-4 py-2 text-xs font-black text-white transition bg-teal-600 shadow-md hover:bg-teal-700 disabled:bg-slate-200 rounded-xl"
+                      >
+                        {actionLoading === token.id ? 'Approving...' : '✓ Approve'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
-
+        ) : (
+          <div className="flex flex-col items-center py-16 space-y-2 text-center text-slate-400">
+            <span className="block text-5xl">☕</span>
+            <p className="font-bold text-slate-500">දැනට කිසිදු Pending ටෝකන් එකක් නැත මචන්!</p>
+            <p className="max-w-xs text-xs text-slate-400">ලෙඩෙක් Token එකක් ගත්තම ඒක මේ ලැයිස්තුවට ලයිව්ම එකතු වේවි.</p>
+          </div>
+        )}
       </div>
+
+      {/* 🏥 Offline Registration Form */}
+      <div className="bg-white p-8 rounded-3xl border border-slate-200/60 shadow-sm">
+        <h3 className="flex items-center gap-2 text-lg font-black text-slate-800 mb-6">
+          <span className="text-teal-600">📝</span> Register Walk-in Patient
+        </h3>
+        
+        <form onSubmit={handleOfflineRegistration} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">NIC Number</label>
+            <input required type="text" value={offlineNic} onChange={e => setOfflineNic(e.target.value)} className="w-full px-4 py-3 border rounded-xl border-slate-200 focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g., 901234567V"/>
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">Full Name</label>
+            <input required type="text" value={offlineName} onChange={e => setOfflineName(e.target.value)} className="w-full px-4 py-3 border rounded-xl border-slate-200 focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Patient Name"/>
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">Age</label>
+            <input required type="number" value={offlineAge} onChange={e => setOfflineAge(e.target.value)} className="w-full px-4 py-3 border rounded-xl border-slate-200 focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g., 45"/>
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">Gender</label>
+            <select value={offlineGender} onChange={e => setOfflineGender(e.target.value)} className="w-full px-4 py-3 border rounded-xl border-slate-200 focus:ring-2 focus:ring-teal-500 outline-none">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+          <div className="md:col-span-2 flex items-center gap-3">
+            <input type="checkbox" id="offlinePriority" checked={offlinePriority} onChange={e => setOfflinePriority(e.target.checked)} className="w-5 h-5 text-teal-600 rounded border-slate-300 focus:ring-teal-500"/>
+            <label htmlFor="offlinePriority" className="text-sm font-bold text-slate-700">Special Need / Priority (Senior / Disabled)</label>
+          </div>
+          <div className="md:col-span-2 pt-4 border-t border-slate-100">
+            <button disabled={offlineLoading} type="submit" className="w-full py-4 text-white font-black bg-teal-600 hover:bg-teal-700 rounded-xl transition shadow-lg shadow-teal-600/20 disabled:bg-slate-300">
+              {offlineLoading ? 'Registering...' : 'Register Patient & Generate Token 🎟️'}
+            </button>
+          </div>
+        </form>
+      </div>
+
     </div>
   );
 }
