@@ -15,13 +15,21 @@ public class DoctorController {
     }
 
     @PostMapping("/register")
-    public String registerDoctor(@RequestBody DoctorRegistrationRequest request) {
-        return doctorService.registerDoctor(request);
+    public org.springframework.http.ResponseEntity<String> registerDoctor(@RequestBody DoctorRegistrationRequest request) {
+        String result = doctorService.registerDoctor(request);
+        if (result.startsWith("Error")) {
+            return org.springframework.http.ResponseEntity.badRequest().body(result);
+        }
+        return org.springframework.http.ResponseEntity.ok(result);
     }
 
     @PutMapping("/update/{id}")
-    public String updateDoctor(@PathVariable Long id, @RequestBody DoctorRegistrationRequest request) {
-        return doctorService.updateDoctor(id, request);
+    public org.springframework.http.ResponseEntity<String> updateDoctor(@PathVariable Long id, @RequestBody DoctorRegistrationRequest request) {
+        String result = doctorService.updateDoctor(id, request);
+        if (result.startsWith("Error")) {
+            return org.springframework.http.ResponseEntity.badRequest().body(result);
+        }
+        return org.springframework.http.ResponseEntity.ok(result);
     }
 
     @DeleteMapping("/delete/{id}")
@@ -32,5 +40,39 @@ public class DoctorController {
     @GetMapping("/all")
     public java.util.List<com.hospital.queue_backend.dto.response.DoctorResponse> getAllDoctors() {
         return doctorService.getAllDoctors();
+    }
+
+    @GetMapping("/hospital/{hospitalId}")
+    public java.util.List<com.hospital.queue_backend.dto.response.DoctorResponse> getDoctorsByHospital(@PathVariable Long hospitalId) {
+        return doctorService.getDoctorsByHospitalId(hospitalId);
+    }
+
+    @PutMapping("/{id}/status")
+    public org.springframework.http.ResponseEntity<String> updateStatus(@PathVariable Long id, @RequestParam boolean isAvailable) {
+        try {
+            String result = doctorService.updateStatus(id, isAvailable);
+            return org.springframework.http.ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/assign-hospital")
+    public org.springframework.http.ResponseEntity<String> assignDoctorToHospital(@RequestBody com.hospital.queue_backend.dto.request.AssignDoctorRequest request) {
+        String result = doctorService.assignDoctorToHospital(request);
+        if (result.startsWith("Error")) {
+            return org.springframework.http.ResponseEntity.badRequest().body(result);
+        }
+        return org.springframework.http.ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/user/{userId}")
+    public java.util.List<com.hospital.queue_backend.dto.response.DoctorProfileDTO> getDoctorProfilesByUserId(@PathVariable Long userId) {
+        return doctorService.getDoctorProfilesByUserId(userId);
+    }
+
+    @GetMapping("/unique")
+    public java.util.List<com.hospital.queue_backend.dto.response.UniqueDoctorDTO> getAllUniqueDoctors() {
+        return doctorService.getAllUniqueDoctors();
     }
 }

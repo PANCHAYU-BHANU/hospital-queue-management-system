@@ -9,13 +9,21 @@ function Sidebar({ role, fullName, onLogout, activeTab, setActiveTab }) {
         return [
           { name: 'Manage Doctors', icon: '👨‍⚕️' },
           { name: 'Manage Counters', icon: '🧑‍💻' },
+          { name: 'Manage Communication Centers', icon: '📞' },
+          { name: 'Manage OPD Rooms', icon: '🚪' },
+          { name: 'Manage Pharmacists', icon: '💊' },
           { name: 'Hospital Settings', icon: '⚙️' }
         ];
       case 'DOCTOR':
         return [
           { name: 'Live Queue', icon: '👥' },
-          { name: 'Patient History', icon: '📋' },
           { name: 'My Profile', icon: '👨‍⚕️' }
+        ];
+      case 'PHARMACIST':
+        return [
+          { name: 'Pharmacy Queue', icon: '📋' },
+          { name: 'Medicine Inventory', icon: '💊' },
+          { name: 'My Profile', icon: '🧑‍💼' }
         ];
       case 'COUNTER':
         return [
@@ -23,12 +31,25 @@ function Sidebar({ role, fullName, onLogout, activeTab, setActiveTab }) {
           { name: 'All Tokens', icon: '🎟️' },
           { name: 'Hospital Stats', icon: '📊' }
         ];
+      case 'SUPER_ADMIN':
+        return [
+          { name: 'Hospital Management', icon: '🏥' },
+          { name: 'Admin Management', icon: '👨‍💼' },
+          { name: 'Assign Doctors', icon: '👨‍⚕️' },
+          { name: 'Doctor Transfers', icon: '🔄' },
+          { name: 'Doctor Deletions', icon: '🗑️' }
+        ];
+      case 'COMMUNICATION':
+        return [
+          { name: 'Communication Center', icon: '📞' }
+        ];
       case 'PATIENT':
       default:
         return [
           { name: 'Get Token', icon: '🎫' },
           { name: 'My Queue Status', icon: '⏱️' },
-          { name: 'Medical Records', icon: '📁' }
+          { name: 'Medical Records', icon: '📁' },
+          { name: 'My Profile', icon: '🧑‍💼' }
         ];
     }
   };

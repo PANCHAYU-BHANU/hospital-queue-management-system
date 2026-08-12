@@ -19,8 +19,12 @@ public class QueueController {
 
     // ටෝකන් එකක් ගන්න ලින්ක් එක (දැන් specialNeed එකත් json එකෙන් එවන්න ඕනේ)
     @PostMapping("/generate")
-    public QueueResponse generateToken(@RequestBody QueueGenerateRequest request) {
-        return queueService.generateToken(request);
+    public org.springframework.http.ResponseEntity<?> generateToken(@RequestBody QueueGenerateRequest request) {
+        try {
+            return org.springframework.http.ResponseEntity.ok(queueService.generateToken(request));
+        } catch (RuntimeException e) {
+            return org.springframework.http.ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     // දොස්තර "Next Patient" බටන් එක ඔබද්දී කතා කරන ලින්ක් එක (2:1 Ratio එකට වැඩ කරන්නේ මේකයි)
@@ -34,9 +38,24 @@ public class QueueController {
         return queueService.getTodayQueue(doctorId);
     }
 
+    @PutMapping("/start/{queueId}")
+    public String startConsultation(@PathVariable Long queueId) {
+        return queueService.startConsultation(queueId);
+    }
+
+    @PutMapping("/complete/{queueId}")
+    public String completeConsultation(@PathVariable Long queueId) {
+        return queueService.completeConsultation(queueId);
+    }
+
     @PutMapping("/approve/{queueId}")
     public String approveToken(@PathVariable Long queueId) {
         return queueService.approvePatientToken(queueId);
+    }
+
+    @PutMapping("/reject/{queueId}")
+    public String rejectToken(@PathVariable Long queueId) {
+        return queueService.rejectPatientToken(queueId);
     }
 
     @GetMapping("/pending-approvals")
@@ -62,5 +81,30 @@ public class QueueController {
     @GetMapping("/active/{userId}")
     public QueueResponse getActiveTicket(@PathVariable Long userId) {
         return queueService.getActiveTicketForUser(userId);
+    }
+
+    @GetMapping("/status/{queueId}")
+    public com.hospital.queue_backend.dto.response.QueueStatusResponse getQueueStatus(@PathVariable Long queueId) {
+        return queueService.getQueueStatus(queueId);
+    }
+
+    @GetMapping("/pharmacy-queue/{hospitalId}")
+    public List<QueueResponse> getPharmacyQueue(@PathVariable Long hospitalId) {
+        return queueService.getPharmacyQueue(hospitalId);
+    }
+
+    @PutMapping("/pharmacy-complete/{queueId}")
+    public String completePharmacy(@PathVariable Long queueId) {
+        return queueService.completePharmacy(queueId);
+    }
+
+    @GetMapping("/pending-payments/{hospitalId}")
+    public List<QueueResponse> getPendingPayments(@PathVariable Long hospitalId) {
+        return queueService.getPendingPayments(hospitalId);
+    }
+
+    @PutMapping("/payment-complete/{queueId}")
+    public String completePayment(@PathVariable Long queueId) {
+        return queueService.completePayment(queueId);
     }
 }

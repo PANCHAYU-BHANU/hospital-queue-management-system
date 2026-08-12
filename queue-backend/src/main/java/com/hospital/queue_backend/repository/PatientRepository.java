@@ -11,6 +11,7 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
 
     // User එකවුන්ට් එක මඟින් රෝගියාගේ ප්‍රොෆයිල් එක හොයාගන්න
     Optional<Patient> findByUser(User user);
-    
     Optional<Patient> findByUserId(Long userId);
+
+    Optional<Patient> findByUser_NicNumber(String nicNumber);
 }

@@ -12,8 +12,8 @@ import java.util.List;
 public interface QueueRepository extends JpaRepository<Queue, Long> {
 
     // ◄ මෙන්න මේ මෙතඩ් එකේ @Query එකයි parameters දෙකයි හරියටම මෙහෙම හදන්න මචන්:
-    @Query("SELECT COALESCE(MAX(q.tokenNumber), 0) FROM Queue q WHERE q.doctor.id = :doctorId AND q.queueType = :queueType AND CAST(q.createdAt AS date) = CURRENT_DATE")
-    int findMaxTokenNumberForToday(@Param("doctorId") Long doctorId, @Param("queueType") String queueType);
+    @Query("SELECT COALESCE(MAX(q.tokenNumber), 0) FROM Queue q WHERE q.doctor.id = :doctorId AND q.status != 'REJECTED' AND CAST(q.createdAt AS date) = CURRENT_DATE")
+    int findMaxTokenNumberForToday(@Param("doctorId") Long doctorId);
 
     // අද දවසේ, නිශ්චිත දොස්තර කෙනෙක්ගේ පෝලිමේ ඉන්න ඔක්කොම ලෙඩ්ඩුන්ගේ ලිස්ට් එක ගන්න
     @Query("SELECT q FROM Queue q WHERE q.doctor.id = :doctorId AND CAST(q.createdAt AS date) = CURRENT_DATE ORDER BY q.tokenNumber ASC")
@@ -35,10 +35,21 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
             org.springframework.data.domain.Pageable pageable);
 
     // දොස්තර කෙනෙක්ගේ පෝලිමේ දැනට ඉන්න ගාන
-    @Query("SELECT COUNT(q) FROM Queue q WHERE q.doctor.id = :doctorId AND (q.status = 'PENDING' OR q.status = 'IN_CONSULTATION') AND CAST(q.createdAt AS date) = CURRENT_DATE")
+    @Query("SELECT COUNT(q) FROM Queue q WHERE q.doctor.id = :doctorId AND (q.status = 'PENDING' OR q.status = 'CALLED' OR q.status = 'IN_CONSULTATION') AND CAST(q.createdAt AS date) = CURRENT_DATE")
     long countPendingQueueForDoctor(@Param("doctorId") Long doctorId);
 
-    // පේෂන්ට් කෙනෙක්ට දැනට තියෙන සක්‍රීය ටෝකන් එක ගන්න (User ID එකෙන්)
-    @Query("SELECT q FROM Queue q WHERE q.patient.user.id = :userId AND (q.status = 'PENDING' OR q.status = 'PENDING_APPROVAL' OR q.status = 'IN_CONSULTATION') AND CAST(q.createdAt AS date) = CURRENT_DATE")
-    java.util.Optional<Queue> findActiveQueueByUserId(@Param("userId") Long userId);
+    @Query("SELECT q FROM Queue q WHERE q.patient.user.id = :userId AND (q.status = 'PENDING' OR q.status = 'PENDING_APPROVAL' OR q.status = 'CALLED' OR q.status = 'IN_CONSULTATION' OR q.status = 'PHARMACY_QUEUE' OR q.status = 'PENDING_PAYMENT') AND CAST(q.createdAt AS date) = CURRENT_DATE ORDER BY q.id DESC")
+    List<Queue> findActiveQueueByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT COUNT(q) FROM Queue q WHERE q.doctor.id = :doctorId AND q.queueType = 'NORMAL' AND (q.status = 'PENDING' OR q.status = 'CALLED' OR q.status = 'IN_CONSULTATION') AND q.tokenNumber < :tokenNumber AND CAST(q.createdAt AS date) = CURRENT_DATE")
+    long countNormalPeopleAhead(@Param("doctorId") Long doctorId, @Param("tokenNumber") int tokenNumber);
+
+    @Query("SELECT COUNT(q) FROM Queue q WHERE q.doctor.id = :doctorId AND q.queueType = 'PRIORITY' AND (q.status = 'PENDING' OR q.status = 'CALLED' OR q.status = 'IN_CONSULTATION') AND q.tokenNumber < :tokenNumber AND CAST(q.createdAt AS date) = CURRENT_DATE")
+    long countPriorityPeopleAhead(@Param("doctorId") Long doctorId, @Param("tokenNumber") int tokenNumber);
+
+    @Query("SELECT q FROM Queue q WHERE q.hospital.id = :hospitalId AND q.status = 'PHARMACY_QUEUE' AND CAST(q.createdAt AS date) = CURRENT_DATE ORDER BY q.consultationEndTime ASC")
+    List<Queue> findPharmacyQueue(@Param("hospitalId") Long hospitalId);
+
+    @Query("SELECT q FROM Queue q WHERE q.hospital.id = :hospitalId AND q.status = 'PENDING_PAYMENT' AND CAST(q.createdAt AS date) = CURRENT_DATE ORDER BY q.consultationEndTime ASC")
+    List<Queue> findPendingPayments(@Param("hospitalId") Long hospitalId);
 }

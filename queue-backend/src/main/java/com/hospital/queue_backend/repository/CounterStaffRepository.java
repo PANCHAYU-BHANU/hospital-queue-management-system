@@ -11,4 +11,5 @@ import com.hospital.queue_backend.entity.User;
 public interface CounterStaffRepository extends JpaRepository<CounterStaff, Long> {
     boolean existsByCounterNumber(String counterNumber);
     Optional<CounterStaff> findByUser(User user);
+    java.util.List<CounterStaff> findByHospital_Id(Long hospitalId);
 }

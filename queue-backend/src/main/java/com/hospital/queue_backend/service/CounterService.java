@@ -96,4 +96,8 @@ public class CounterService {
     public java.util.List<CounterStaff> getAllCounters() {
         return counterStaffRepository.findAll();
     }
+
+    public java.util.List<CounterStaff> getCountersByHospitalId(Long hospitalId) {
+        return counterStaffRepository.findByHospital_Id(hospitalId);
+    }
 }

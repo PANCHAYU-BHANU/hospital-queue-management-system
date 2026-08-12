@@ -15,7 +15,7 @@ public class Doctor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user; // දොස්තරගේ Login එකට link වෙනවා
 
@@ -25,9 +25,8 @@ public class Doctor {
     @Column(nullable = false)
     private String specialization; // OPD, Clinic, Pediatic වගේ
 
-    private String roomNumber; // බලාගන්නා කාමර අංකය හෝ කවුන්ටරය
-
-    private boolean isAvailable; // දැනට රෝගීන් බලනවාද නැද්ද (Active/Inactive)
+    @Column(nullable = false)
+    private boolean isAvailable = true; // දොස්තර අද ඇවිත්ද නැද්ද කියලා
 
     @ManyToOne
     @JoinColumn(name = "hospital_id", referencedColumnName = "id")

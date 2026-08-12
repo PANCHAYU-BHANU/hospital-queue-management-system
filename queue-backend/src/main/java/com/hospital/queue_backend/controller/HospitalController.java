@@ -36,4 +36,19 @@ public class HospitalController {
     public Hospital registerHospital(@RequestBody Hospital hospital) {
         return hospitalService.createHospital(hospital);
     }
+
+    @PutMapping("/update/{id}")
+    public Hospital updateHospital(@PathVariable Long id, @RequestBody Hospital hospital) {
+        return hospitalService.updateHospital(id, hospital);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public org.springframework.http.ResponseEntity<?> deleteHospital(@PathVariable Long id) {
+        try {
+            String result = hospitalService.deleteHospital(id);
+            return org.springframework.http.ResponseEntity.ok().body(java.util.Collections.singletonMap("message", result));
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Collections.singletonMap("error", e.getMessage()));
+        }
+    }
 }

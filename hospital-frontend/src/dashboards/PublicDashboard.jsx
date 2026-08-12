@@ -16,6 +16,8 @@ L.Marker.prototype.options.icon = DefaultIcon;
 function PublicDashboard({ onBackToLogin }) {
   const [hospitals, setHospitals] = useState([]);
   const [selectedHospital, setSelectedHospital] = useState('');
+  const [doctors, setDoctors] = useState([]);
+  const [selectedDoctorId, setSelectedDoctorId] = useState('');
   const [doctorQueueData, setDoctorQueueData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -30,39 +32,65 @@ function PublicDashboard({ onBackToLogin }) {
       const data = await res.json();
       setHospitals(data);
       if (data.length > 0) {
-        setSelectedHospital(data[0].id);
+        handleHospitalChange({ target: { value: data[0].id } });
       }
     } catch (err) {
       console.error("Failed to load hospitals", err);
     }
   };
 
+  const handleHospitalChange = async (e) => {
+    const hId = e.target.value;
+    setSelectedHospital(hId);
+    if (hId) {
+      try {
+        const res = await fetch(`http://localhost:8080/api/doctors/hospital/${hId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const availableDoctors = data.filter(doc => doc.available && doc.roomNumber !== "Unassigned");
+          setDoctors(availableDoctors);
+          if (availableDoctors.length > 0) setSelectedDoctorId(availableDoctors[0].id);
+          else setSelectedDoctorId('');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      setDoctors([]);
+      setSelectedDoctorId('');
+    }
+  };
+
   const handleCheckQueue = async () => {
-    if (!selectedHospital) return;
+    if (!selectedDoctorId) {
+      setError("Please select a doctor/room first.");
+      return;
+    }
     setLoading(true);
     setError(null);
     setDoctorQueueData(null);
     
-    // In a real scenario, we might select a specific doctor/room from the hospital.
-    // For this prototype, we'll assume doctor ID 1 is the main OPD doctor.
-    // Ideally, we fetch doctors for this hospital. Let's hardcode doctorId 1 for now or 
-    // we could fetch all doctors. For simplicity, we just fetch wait time for doctorId 1.
-    const doctorId = 1;
-
     try {
       // Get estimated wait time
-      const waitRes = await fetch(`http://localhost:8080/api/queue/estimate-wait-time/${doctorId}`);
+      const waitRes = await fetch(`http://localhost:8080/api/queue/estimate-wait-time/${selectedDoctorId}`);
       const waitText = await waitRes.text();
 
       // Get current queue
-      const queueRes = await fetch(`http://localhost:8080/api/queue/doctor/${doctorId}`);
+      const queueRes = await fetch(`http://localhost:8080/api/queue/doctor/${selectedDoctorId}`);
       const queueData = await queueRes.json();
       
-      const pendingCount = queueData.filter(q => q.status === 'PENDING').length;
+      const pendingNormalCount = queueData.filter(q => q.status === 'PENDING' && q.queueType === 'NORMAL').length;
+      const pendingPriorityCount = queueData.filter(q => q.status === 'PENDING' && q.queueType === 'PRIORITY').length;
+      const pendingCount = pendingNormalCount + pendingPriorityCount;
+      
+      const selectedDoc = doctors.find(d => d.id == selectedDoctorId);
       
       setDoctorQueueData({
+        roomName: selectedDoc ? `${selectedDoc.roomNumber} - Dr. ${selectedDoc.doctorName}` : "Selected Room",
         waitTime: waitText,
-        pendingCount: pendingCount
+        pendingCount,
+        pendingNormalCount,
+        pendingPriorityCount
       });
       
     } catch (err) {
@@ -92,7 +120,7 @@ function PublicDashboard({ onBackToLogin }) {
             <select 
               className="w-full px-4 py-3 font-bold border outline-none rounded-xl border-slate-200 bg-slate-50 text-slate-700 focus:ring-2 focus:ring-teal-500"
               value={selectedHospital}
-              onChange={(e) => setSelectedHospital(e.target.value)}
+              onChange={handleHospitalChange}
             >
               <option value="">-- Choose Hospital --</option>
               {hospitals.map(h => (
@@ -100,6 +128,23 @@ function PublicDashboard({ onBackToLogin }) {
               ))}
             </select>
           </div>
+
+          {doctors.length > 0 && (
+            <div>
+              <label className="block text-sm font-bold uppercase text-slate-400 mb-2">Select Department & Doctor</label>
+              <select 
+                className="w-full px-4 py-3 font-bold border outline-none rounded-xl border-slate-200 bg-slate-50 text-slate-700 focus:ring-2 focus:ring-teal-500"
+                value={selectedDoctorId}
+                onChange={(e) => setSelectedDoctorId(e.target.value)}
+              >
+                {doctors.map(doc => (
+                  <option key={doc.id} value={doc.id}>
+                    {doc.roomNumber} - Dr. {doc.doctorName} ({doc.specialization})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Leaflet Map */}
           {hospitals.length > 0 && (
@@ -119,7 +164,7 @@ function PublicDashboard({ onBackToLogin }) {
                     position={[h.latitude || 0, h.longitude || 0]}
                     eventHandlers={{
                       click: () => {
-                        setSelectedHospital(h.id);
+                        handleHospitalChange({ target: { value: h.id } });
                       },
                     }}
                   >
@@ -135,7 +180,7 @@ function PublicDashboard({ onBackToLogin }) {
           
           <button 
             onClick={handleCheckQueue}
-            disabled={loading || !selectedHospital}
+            disabled={loading || !selectedDoctorId}
             className="w-full py-4 text-white font-black bg-teal-600 hover:bg-teal-700 rounded-xl transition shadow-lg shadow-teal-600/20 disabled:opacity-50"
           >
             {loading ? "Checking..." : "Check Live Queue"}
@@ -145,16 +190,24 @@ function PublicDashboard({ onBackToLogin }) {
           
           {doctorQueueData && (
             <div className="mt-8 p-6 bg-slate-50 rounded-2xl border border-slate-200">
-              <h3 className="text-xl font-black text-slate-800 mb-6 text-center">General OPD Room 01</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <h3 className="text-xl font-black text-slate-800 mb-6 text-center">{doctorQueueData.roomName}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div className="p-6 bg-white rounded-xl shadow-sm border border-slate-100 text-center">
-                  <span className="block text-sm font-bold text-slate-400 mb-2">Patients Waiting</span>
-                  <span className="text-4xl font-black text-slate-700">{doctorQueueData.pendingCount}</span>
+                  <span className="block text-sm font-bold text-slate-400 mb-2">Normal Queue</span>
+                  <span className="text-3xl font-black text-slate-700">{doctorQueueData.pendingNormalCount}</span>
                 </div>
-                <div className="p-6 bg-white rounded-xl shadow-sm border border-slate-100 text-center">
-                  <span className="block text-sm font-bold text-slate-400 mb-2">Estimated Wait Time</span>
-                  <span className="text-2xl font-black text-teal-600">{doctorQueueData.waitTime}</span>
+                <div className="p-6 bg-rose-50 rounded-xl shadow-sm border border-rose-100 text-center">
+                  <span className="block text-sm font-bold text-rose-500 mb-2">Priority Queue</span>
+                  <span className="text-3xl font-black text-rose-600">{doctorQueueData.pendingPriorityCount}</span>
                 </div>
+                <div className="p-6 bg-slate-800 rounded-xl shadow-sm border border-slate-700 text-center">
+                  <span className="block text-sm font-bold text-slate-400 mb-2">Total Waiting</span>
+                  <span className="text-3xl font-black text-white">{doctorQueueData.pendingCount}</span>
+                </div>
+              </div>
+              <div className="p-6 bg-teal-50 rounded-xl shadow-sm border border-teal-100 text-center">
+                <span className="block text-sm font-bold text-teal-600 mb-2">Estimated Wait Time</span>
+                <span className="text-2xl font-black text-teal-700">{doctorQueueData.waitTime}</span>
               </div>
             </div>
           )}

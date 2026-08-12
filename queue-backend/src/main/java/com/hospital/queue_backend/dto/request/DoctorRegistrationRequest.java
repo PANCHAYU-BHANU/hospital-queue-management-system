@@ -9,7 +9,6 @@ public class DoctorRegistrationRequest {
     private String password;
     private String doctorName;
     private String specialization;
-    private String roomNumber;
     private Long hospitalId;
     private Boolean isAvailable;
 }

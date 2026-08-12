@@ -28,6 +28,25 @@ public class HospitalService {
         return hospitalRepository.save(hospital);
     }
 
+    public Hospital updateHospital(Long id, Hospital hospitalDetails) {
+        Hospital hospital = hospitalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Hospital not found"));
+        
+        if (hospitalDetails.getName() != null) hospital.setName(hospitalDetails.getName());
+        if (hospitalDetails.getDistrict() != null) hospital.setDistrict(hospitalDetails.getDistrict());
+        if (hospitalDetails.getLatitude() != null) hospital.setLatitude(hospitalDetails.getLatitude());
+        if (hospitalDetails.getLongitude() != null) hospital.setLongitude(hospitalDetails.getLongitude());
+        
+        return hospitalRepository.save(hospital);
+    }
+
+    public String deleteHospital(Long id) {
+        Hospital hospital = hospitalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Hospital not found"));
+        hospitalRepository.delete(hospital);
+        return "Hospital deleted successfully";
+    }
+
     public Hospital getNearestHospital(double userLat, double userLon) {
         List<Hospital> hospitals = hospitalRepository.findAll();
         Hospital nearestHospital = null;

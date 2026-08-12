@@ -9,4 +9,5 @@ public class QueueGenerateRequest {
     private boolean isSpecialNeed;
     private Double latitude;
     private Double longitude;
+    private Boolean isCommunicationCenter;
 }

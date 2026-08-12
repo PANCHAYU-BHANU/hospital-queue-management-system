@@ -1,103 +1,277 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 
-// 💡 App.jsx එකෙන් එන 'user' ප්‍රොප් එක මෙතනට ගන්නවා
 function PatientDashboard({ user }) {
-  const [selectedRoom, setSelectedRoom] = useState('OPD Room 01'); //
-  const [isPriorityChecked, setIsPriorityChecked] = useState(false); //
-  const [ticket, setTicket] = useState(null); // Active Ticket එක සෙට් කරන ස්ටේට් එක
+  const [isPriorityChecked, setIsPriorityChecked] = useState(false);
+  const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [waitTime, setWaitTime] = useState("Calculating...");
+  const [patientProfile, setPatientProfile] = useState(null);
+  const previousStatus = useRef(null);
+  
+  // Geolocation & Hospital states
   const [userLocation, setUserLocation] = useState(null);
+  const [gpsStatus, setGpsStatus] = useState('checking'); // 'checking', 'granted', 'denied', 'unsupported', 'too_far'
+  const [nearestHospital, setNearestHospital] = useState(null);
+  const [allHospitals, setAllHospitals] = useState([]);
+  const [selectedHospitalId, setSelectedHospitalId] = useState('');
+  
+  // Doctors states
+  const [doctors, setDoctors] = useState([]);
+  const [selectedDoctorId, setSelectedDoctorId] = useState('');
 
-  // Get User Location on Load
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lon: position.coords.longitude
-          });
+        async (position) => {
+          setGpsStatus('granted');
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          const accuracy = position.coords.accuracy;
+          
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+          // If not a mobile device OR accuracy is worse than 2km, fallback to manual selection
+          if (!isMobile || accuracy > 2000) {
+              setGpsStatus('low_accuracy');
+              setUserLocation({ lat, lon, accuracy });
+              fetchAllHospitals();
+              return;
+          }
+
+          setUserLocation({ lat, lon, accuracy });
+          
+          try {
+             const res = await fetch(`http://localhost:8080/api/hospital/nearest?lat=${lat}&lon=${lon}`);
+             if (res.ok) {
+                 const hospital = await res.json();
+                 if (hospital && hospital.id) {
+                     // Calculate distance
+                     const R = 6371; 
+                     const dLat = (hospital.latitude - lat) * Math.PI / 180;
+                     const dLon = (hospital.longitude - lon) * Math.PI / 180;
+                     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                               Math.cos(lat * Math.PI / 180) * Math.cos(hospital.latitude * Math.PI / 180) *
+                               Math.sin(dLon/2) * Math.sin(dLon/2);
+                     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                     const distance = R * c;
+                     
+                     setNearestHospital(hospital);
+                     
+                     if (distance <= 5.0) {
+                         setSelectedHospitalId(hospital.id);
+                         fetchDoctors(hospital.id);
+                     } else {
+                         setGpsStatus('too_far');
+                     }
+                 } else {
+                     setGpsStatus('too_far');
+                 }
+             } else {
+                 setGpsStatus('too_far'); // Fallback if API fails
+             }
+          } catch(err) {
+             console.error("Error fetching nearest hospital:", err);
+             setError("Failed to fetch nearest hospital.");
+          }
         },
-        (err) => console.log("Geolocation error:", err)
+        (err) => {
+          console.log("Geolocation error:", err);
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          if (!isMobile) {
+            setGpsStatus('unsupported');
+            fetchAllHospitals();
+          } else {
+            setGpsStatus('denied');
+          }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
+    } else {
+      setGpsStatus('unsupported');
+      fetchAllHospitals();
     }
   }, []);
 
-  // 🔄 පැනල් එක ලෝඩ් වෙද්දීම දැනට මේ පේෂන්ට්ගේ Active ටෝකන් එකක් තියෙනවද කියලා බලන්න පුළුවන් (Optional)
-  useEffect(() => {
-    if (user && user.id) {
-      fetchActiveTicket();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (ticket && ticket.doctor) {
-      fetchWaitTime(ticket.doctor.id);
-      const interval = setInterval(() => fetchWaitTime(ticket.doctor.id), 60000); // Check every minute
-      return () => clearInterval(interval);
-    }
-  }, [ticket]);
-
-  const fetchWaitTime = async (doctorId) => {
+  const fetchAllHospitals = async () => {
     try {
-      const res = await fetch(`http://localhost:8080/api/queue/estimate-wait-time/${doctorId}`);
-      const text = await res.text();
-      setWaitTime(text);
+      const res = await fetch(`http://localhost:8080/api/hospital/all`);
+      if (res.ok) {
+        const data = await res.json();
+        setAllHospitals(data);
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Failed to fetch all hospitals:", err);
     }
   };
 
-  // 📡 පේෂන්ට්ගේ දැනට තියෙන සක්‍රීය ටෝකන් එක ඇදලා ගන්නා මෙතඩ් එක
+  const fetchDoctors = async (hospitalId) => {
+    try {
+      const res = await fetch(`http://localhost:8080/api/doctors/hospital/${hospitalId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const availableDoctors = data.filter(doc => doc.available && doc.roomNumber !== "Unassigned");
+        setDoctors(availableDoctors);
+        if (availableDoctors.length > 0) {
+          setSelectedDoctorId(availableDoctors[0].id);
+        } else {
+          setSelectedDoctorId('');
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch doctors:", err);
+    }
+  };
+
+  // Handle manual hospital selection (for devices without GPS)
+  const handleManualHospitalChange = (e) => {
+    const hId = e.target.value;
+    setSelectedHospitalId(hId);
+    if (hId) {
+      fetchDoctors(hId);
+    } else {
+      setDoctors([]);
+      setSelectedDoctorId('');
+    }
+  };
+
   const fetchActiveTicket = async () => {
     try {
       const response = await fetch(`http://localhost:8080/api/queue/active/${user.id}`);
       if (response.ok) {
-        const data = await response.json();
-        setTicket(data);
+        const text = await response.text();
+        if (text) {
+          const data = JSON.parse(text);
+          setTicket(data);
+        } else {
+          setTicket(null);
+        }
+      } else {
+        setTicket(null);
       }
     } catch (err) {
       console.error("Error fetching active ticket:", err);
     }
   };
 
-  // 🎟️ GET LIVE TOKEN 🚀 බටන් එක ක්ලික් කරද්දී රන් වෙන මෙතඩ් එක
+  useEffect(() => {
+    if (user && user.id) {
+      fetchActiveTicket();
+      
+      // Poll active ticket every 5 seconds so patient gets real-time status updates (CALLED, IN_CONSULTATION)
+      const interval = setInterval(fetchActiveTicket, 5000);
+      
+      const fetchPatientProfile = async () => {
+        try {
+          const response = await fetch(`http://localhost:8080/api/patients/profile/${user.id}`);
+          if (response.ok) {
+            const data = await response.json();
+            setPatientProfile(data);
+            if (data.age >= 60) {
+              setIsPriorityChecked(true);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to fetch profile:", err);
+        }
+      };
+      
+      fetchPatientProfile();
+      
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (ticket && ticket.doctor) {
+      fetchWaitTime(ticket.doctor.id);
+      const interval = setInterval(() => fetchWaitTime(ticket.doctor.id), 60000);
+      return () => clearInterval(interval);
+    }
+  }, [ticket]);
+  useEffect(() => {
+    if (ticket) {
+      if (ticket.status === 'CALLED' && previousStatus.current !== 'CALLED') {
+        Swal.fire({
+          title: 'ඔබගේ වාරය පැමිණ ඇත! 🔔',
+          text: 'කරුණාකර වෛද්‍යවරයාගේ කාමරයට යන්න (Please proceed to the doctor\'s room)',
+          icon: 'info',
+          confirmButtonText: 'OK',
+          confirmButtonColor: '#0d9488'
+        });
+      }
+      
+      if (ticket.status === 'PHARMACY_QUEUE' && previousStatus.current !== 'PHARMACY_QUEUE') {
+        Swal.fire({
+          title: 'බෙහෙත් වට්ටෝරුව සූදානම්! 💊',
+          text: 'කරුණාකර රෝහලේ ෆාමසිය වෙත ගොස් ඔබගේ බෙහෙත් ලබාගන්න. (Please proceed to the Pharmacy)',
+          icon: 'success',
+          confirmButtonText: 'OK',
+          confirmButtonColor: '#0d9488'
+        });
+      }
+      
+      if (ticket.status === 'PENDING_PAYMENT' && previousStatus.current !== 'PENDING_PAYMENT') {
+        Swal.fire({
+          title: 'බෙහෙත් නිකුත් කර ඇත! 🎁',
+          text: 'ඔබගේ බෙහෙත් පාර්සලය සූදානම්. කරුණාකර ෆාමසියෙන් ලබාගන්න.',
+          icon: 'success',
+          confirmButtonText: 'OK',
+          confirmButtonColor: '#0d9488'
+        });
+      }
+      
+      previousStatus.current = ticket.status;
+    }
+  }, [ticket]);
+
+  const fetchWaitTime = async (doctorId) => {
+    try {
+      const res = await fetch(`http://localhost:8080/api/queue/estimate-wait-time/${doctorId}`);
+      if (res.ok) {
+        const text = await res.text();
+        setWaitTime(text);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleGetToken = async () => {
     setError(null);
 
-    // 1. ලොග් වෙලා ඉන්න යූසර්ගේ ID එක චෙක් කරනවා
     if (!user || !user.id) {
       setError("යූසර්ගේ ID එක ලැබිලා නෑ මචන්! කරුණාකර නැවත ලොග් වෙන්න.");
       return;
     }
 
+    if (!selectedDoctorId) {
+      setError("කරුණාකර කාමරයක්/වෛද්‍යවරයෙක් තෝරන්න!");
+      return;
+    }
+
     setLoading(true);
 
-    // 2. බැක්එන්ඩ් එකේ QueueGenerateRequest එකට හරියටම ගැලපෙන්න හැදූ බොඩි එක
     const tokenRequestData = {
-      userId: user.id,               // 👈 ලොග් වුණු පේෂන්ට්ගේ ID එක (User Object එකෙන්)
-      doctorId: 1,                      // 👈 දැනට ඩේටාබේස් එකේ ඉන්න දොස්තරගේ ID එක (Default: 1)
-      isSpecialNeed: isPriorityChecked,  // 👈 බැක්එන්ඩ් එකේ තියෙන විදියටම 'isSpecialNeed' (true/false)
-      latitude: userLocation ? userLocation.lat : null,
-      longitude: userLocation ? userLocation.lon : null
+      userId: user.id,
+      doctorId: selectedDoctorId,
+      specialNeed: isPriorityChecked,
+      latitude: (gpsStatus === 'granted' && userLocation) ? userLocation.lat : null,
+      longitude: (gpsStatus === 'granted' && userLocation) ? userLocation.lon : null
     };
 
     try {
       const response = await fetch('http://localhost:8080/api/queue/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(tokenRequestData), // 👈 JSON කරලා යැව්වා
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tokenRequestData),
       });
 
       if (response.ok) {
         const activeTicket = await response.json();
-        setTicket(activeTicket); // 👈 ආපු ටෝකන් ඩේටා ටික දකුණු පැත්තේ කාඩ් එකට සෙට් කළා
+        setTicket(activeTicket);
         toast.success("ටෝකන් එක සාර්ථකව ගත්තා මචන්! 🎟️✅");
       } else {
         const errText = await response.text();
@@ -127,13 +301,11 @@ function PatientDashboard({ user }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const res = await fetch(`http://localhost:8080/api/queue/leave/${ticket.id}`, {
-            method: 'PUT'
-          });
-          const text = await res.text();
+          const res = await fetch(`http://localhost:8080/api/queue/leave/${ticket.id}`, { method: 'PUT' });
           if (res.ok) {
+            const text = await res.text();
             toast.success(text);
-            setTicket(null); // Clear ticket
+            setTicket(null);
           } else {
             toast.error("Failed to leave queue.");
           }
@@ -161,40 +333,145 @@ function PatientDashboard({ user }) {
           </div>
         )}
 
-        {/* DEPARTMENT SELECT */}
+        {/* GPS STATUS ALERTS */}
+        {gpsStatus === 'checking' && (
+          <div className="p-4 text-sm font-bold border text-blue-700 bg-blue-50 rounded-xl border-blue-100 flex items-center gap-2">
+            <span className="animate-spin text-xl">⏳</span> ස්ථානය පරීක්ෂා කරමින් පවතී... (Checking location)
+          </div>
+        )}
+
+        {gpsStatus === 'denied' && (
+          <div className="p-4 text-sm font-bold border text-rose-700 bg-rose-50 rounded-xl border-rose-100">
+            🚫 Location (GPS) අක්‍රීයයි! කරුණාකර Browser එකෙන් Location Access ලබා දෙන්න. ටෝකන් ලබා ගැනීමට රෝහලේ සිට 5km ඇතුළත සිටීම අනිවාර්ය වේ.
+          </div>
+        )}
+
+        {gpsStatus === 'too_far' && (
+          <div className="p-4 text-sm font-bold border text-rose-700 bg-rose-50 rounded-xl border-rose-100">
+            <p>🏥 ඔබ සිටින්නේ රෝහලක සිට 5km සීමාවෙන් පිටතයි. ඔබට ටෝකන් ලබා ගත හැක්කේ රෝහලට 5km ආසන්නයේ සිටින විට පමණි.</p>
+            {nearestHospital && userLocation && (
+              <div className="mt-2 text-xs opacity-75 font-mono">
+                <p>ඔබගේ GPS ස්ථානය: {userLocation.lat.toFixed(4)}, {userLocation.lon.toFixed(4)}</p>
+                <p>රෝහලේ ({nearestHospital.name}) ස්ථානය: {nearestHospital.latitude.toFixed(4)}, {nearestHospital.longitude.toFixed(4)}</p>
+                <p>ගණනය කළ දුර: <strong>{
+                  (6371 * 2 * Math.atan2(
+                    Math.sqrt(Math.sin((nearestHospital.latitude - userLocation.lat) * Math.PI / 360) * Math.sin((nearestHospital.latitude - userLocation.lat) * Math.PI / 360) +
+                    Math.cos(userLocation.lat * Math.PI / 180) * Math.cos(nearestHospital.latitude * Math.PI / 180) *
+                    Math.sin((nearestHospital.longitude - userLocation.lon) * Math.PI / 360) * Math.sin((nearestHospital.longitude - userLocation.lon) * Math.PI / 360)),
+                    Math.sqrt(1 - (Math.sin((nearestHospital.latitude - userLocation.lat) * Math.PI / 360) * Math.sin((nearestHospital.latitude - userLocation.lat) * Math.PI / 360) +
+                    Math.cos(userLocation.lat * Math.PI / 180) * Math.cos(nearestHospital.latitude * Math.PI / 180) *
+                    Math.sin((nearestHospital.longitude - userLocation.lon) * Math.PI / 360) * Math.sin((nearestHospital.longitude - userLocation.lon) * Math.PI / 360)))
+                  )).toFixed(2)
+                } km</strong></p>
+              </div>
+            )}
+            {!nearestHospital && userLocation && (
+              <div className="mt-2 text-xs opacity-75 font-mono">
+                <p>ඔබගේ GPS ස්ථානය: {userLocation.lat.toFixed(4)}, {userLocation.lon.toFixed(4)}</p>
+                <p>දෝෂය: ළඟම රෝහලක් සොයා ගැනීමට නොහැකි විය. (Database එකේ Hospitals නැද්ද?)</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {gpsStatus === 'granted' && nearestHospital && (
+          <div className="p-4 text-sm font-bold border text-teal-700 bg-teal-50 rounded-xl border-teal-100">
+            📍 Nearest Hospital: {nearestHospital.name} ({nearestHospital.district}) - You are within 5km!
+          </div>
+        )}
+
+        {gpsStatus === 'low_accuracy' && (
+          <div className="p-4 text-sm font-bold border text-amber-700 bg-amber-50 rounded-xl border-amber-100">
+            ⚠️ ඔබගේ උපාංගයෙන් නිවැරදි GPS පිහිටීම ලබාගත නොහැක. (පරිගණකයක් භාවිතා කිරීම හෝ දුර්වල Signal නිසා). කරුණාකර රෝහල පහතින් තෝරන්න.
+          </div>
+        )}
+
+        {/* MANUAL HOSPITAL SELECTION (For Desktop, Low Accuracy, or No GPS) */}
+        {(gpsStatus === 'unsupported' || gpsStatus === 'low_accuracy') && (
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase text-slate-400">Select Hospital (Manual)</label>
+            <select 
+              className="w-full px-4 py-3 font-bold border outline-none rounded-xl border-slate-200 bg-slate-50 text-slate-700 focus:ring-2 focus:ring-teal-500"
+              value={selectedHospitalId}
+              onChange={handleManualHospitalChange}
+            >
+              <option value="">-- Select a Hospital --</option>
+              {allHospitals.map(h => (
+                <option key={h.id} value={h.id}>{h.name} - {h.district}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* DEPARTMENT / DOCTOR SELECT */}
         <div className="space-y-2">
-          <label className="text-xs font-bold uppercase text-slate-400">Select Department / Clinic</label>
+          <label className="text-xs font-bold uppercase text-slate-400">Select Department & Doctor</label>
           <select 
-            className="w-full px-4 py-3 font-bold border outline-none rounded-xl border-slate-200 bg-slate-50 text-slate-700 focus:ring-2 focus:ring-teal-500"
-            value={selectedRoom}
-            onChange={(e) => setSelectedRoom(e.target.value)}
+            className="w-full px-4 py-3 font-bold border outline-none rounded-xl border-slate-200 bg-slate-50 text-slate-700 focus:ring-2 focus:ring-teal-500 disabled:opacity-50"
+            value={selectedDoctorId}
+            onChange={(e) => setSelectedDoctorId(e.target.value)}
+            disabled={gpsStatus === 'denied' || gpsStatus === 'too_far' || gpsStatus === 'checking' || doctors.length === 0}
           >
-            <option value="OPD Room 01">OPD Room 01 (සාමාන්‍ය රෝග)</option>
-            <option value="OPD Room 02">OPD Room 02</option>
-            <option value="Dental Clinic">Dental Clinic</option>
+            {doctors.length === 0 ? (
+              <option value="">No doctors/rooms available</option>
+            ) : (
+              doctors.map(doc => (
+                <option key={doc.id} value={doc.id}>
+                  {doc.roomNumber} - Dr. {doc.doctorName} ({doc.specialization})
+                </option>
+              ))
+            )}
           </select>
         </div>
 
         {/* PRIORITY BOOKING CHECKBOX */}
-        <div className="flex items-start p-4 space-x-3 border bg-amber-50/50 rounded-xl border-amber-100">
-          <input 
-            type="checkbox" 
-            id="priority"
-            className="w-4 h-4 mt-1 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
-            checked={isPriorityChecked}
-            onChange={(e) => setIsPriorityChecked(e.target.checked)}
-          />
-          <label htmlFor="priority" className="text-xs font-medium leading-relaxed select-none text-slate-600">
-            <strong className="text-amber-700 block font-bold mb-0.5">Priority Booking (විශේෂ ප්‍රමුඛතාවය)</strong>
-            ඔබ ගර්භණී මවක්, ආබාධිත හෝ වයස අවුරුදු 65ට වැඩි ජ්‍යෙෂ්ඨ පුරවැසියෙක් නම් පමණක් මෙය සක්‍රීය කරන්න.
-          </label>
+        <div className="flex flex-col p-4 space-y-3 border bg-amber-50/50 rounded-xl border-amber-100">
+          <div className="flex items-start space-x-3">
+            <input 
+              type="checkbox" 
+              id="priority"
+              className="w-4 h-4 mt-1 text-teal-600 rounded border-slate-300 focus:ring-teal-500 disabled:opacity-50"
+              checked={isPriorityChecked}
+              onChange={(e) => setIsPriorityChecked(e.target.checked)}
+              disabled={gpsStatus === 'denied' || gpsStatus === 'too_far' || gpsStatus === 'checking' || (patientProfile && patientProfile.age >= 60)}
+            />
+            <label htmlFor="priority" className="text-xs font-medium leading-relaxed select-none text-slate-600">
+              <strong className="text-amber-700 block font-bold mb-0.5">Priority Booking (විශේෂ ප්‍රමුඛතාවය)</strong>
+              ඔබ ගර්භණී මවක්, ආබාධිත හෝ වයස අවුරුදු 60ට වැඩි ජ්‍යෙෂ්ඨ පුරවැසියෙක් නම් පමණක් මෙය සක්‍රීය කරන්න.
+            </label>
+          </div>
+          
+          {/* GENDER SPECIFIC OPTIONS */}
+          {isPriorityChecked && patientProfile && patientProfile.age < 60 && (
+            <div className="pl-7 pt-2 border-t border-amber-100/50">
+              {patientProfile.gender === 'Female' ? (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-amber-800">කරුණාකර හේතුව තෝරන්න:</label>
+                  <div className="flex items-center space-x-4">
+                    <label className="flex items-center space-x-2 text-xs font-medium text-slate-600 cursor-pointer">
+                      <input type="radio" name="priorityReason" value="Pregnant" className="text-amber-600 focus:ring-amber-500" defaultChecked />
+                      <span>ගර්භණී (Pregnant)</span>
+                    </label>
+                    <label className="flex items-center space-x-2 text-xs font-medium text-slate-600 cursor-pointer">
+                      <input type="radio" name="priorityReason" value="SpecialNeeds" className="text-amber-600 focus:ring-amber-500" />
+                      <span>විශේෂ අවශ්‍යතා (Special Needs)</span>
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs font-bold text-amber-800 bg-amber-100/50 px-3 py-2 rounded-lg inline-block border border-amber-200">
+                  ✓ විශේෂ අවශ්‍යතා (Special Needs) ලෙස සලකුණු විය
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* SUBMIT BUTTON */}
         <button 
           onClick={handleGetToken}
-          disabled={loading}
-          className="flex items-center justify-center w-full py-4 space-x-2 font-black text-white transition duration-200 bg-teal-600 shadow-lg hover:bg-teal-700 rounded-xl shadow-teal-600/20"
+          disabled={loading || gpsStatus === 'denied' || gpsStatus === 'too_far' || gpsStatus === 'checking' || !selectedDoctorId}
+          className="flex items-center justify-center w-full py-4 space-x-2 font-black text-white transition duration-200 bg-teal-600 shadow-lg hover:bg-teal-700 rounded-xl shadow-teal-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span>{loading ? "Processing..." : "Get Live Token 🚀"}</span>
         </button>
@@ -204,7 +481,6 @@ function PatientDashboard({ user }) {
       <div className="lg:col-span-6 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center items-center h-fit min-h-[350px]">
         
         {!ticket ? (
-          /* ටෝකන් එකක් නැති වෙලාවට පෙන්වන Screen එක */
           <div className="max-w-sm space-y-4 text-center">
             <span className="text-4xl">🎫</span>
             <p className="text-sm font-bold leading-relaxed text-slate-400">
@@ -212,21 +488,34 @@ function PatientDashboard({ user }) {
             </p>
           </div>
         ) : (
-          /* ටෝකන් එකක් සක්‍රීයව ඇති විට පෙන්වන ලස්සන Live Ticket එක 🎟️ */
           <div className="w-full space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <h4 className="text-lg font-black text-slate-800">🎟️ Your Active Ticket</h4>
               <span className={`px-3 py-1 rounded-full text-[10px] font-black ${
-                ticket.isSpecialNeed ? 'bg-amber-100 text-amber-700' : 'bg-teal-100 text-teal-700'
+                ticket.queueType === 'PRIORITY' ? 'bg-rose-100 text-rose-700' : 'bg-teal-100 text-teal-700'
               }`}>
-                {ticket.isSpecialNeed ? 'PRIORITY' : 'REGULAR'}
+                {ticket.queueType === 'PRIORITY' ? 'PRIORITY' : 'REGULAR'}
               </span>
             </div>
 
-            <div className="p-6 space-y-2 text-center text-white shadow-md bg-gradient-to-br from-teal-500 to-teal-700 rounded-2xl">
-              <p className="text-xs font-bold tracking-wider text-teal-100 uppercase">Your Token Number</p>
+            <div className={`p-6 space-y-2 text-center text-white shadow-md rounded-2xl ${
+              ticket.queueType === 'PRIORITY' ? 'bg-gradient-to-br from-rose-500 to-rose-700' : 'bg-gradient-to-br from-teal-500 to-teal-700'
+            }`}>
+              <p className={`text-xs font-bold tracking-wider uppercase ${
+                ticket.queueType === 'PRIORITY' ? 'text-rose-100' : 'text-teal-100'
+              }`}>
+                {ticket.status === 'PENDING_APPROVAL' && 'Sent to Counter (Pending Approval) ⏳'}
+                {ticket.status === 'PENDING' && 'Added to Queue ✅'}
+                {ticket.status === 'CALLED' && 'Please proceed to the doctor\'s room! 🔔'}
+                {ticket.status === 'IN_CONSULTATION' && 'In Consultation 👨‍⚕️'}
+                {ticket.status === 'PHARMACY_QUEUE' && 'Please proceed to the Pharmacy 💊'}
+                {ticket.status === 'PENDING_PAYMENT' && 'Medicines Ready (Pending Payment) 💵'}
+                {ticket.status === 'COMPLETED' && 'Consultation Completed 🎉'}
+              </p>
               <h1 className="text-6xl font-black tracking-tight">{ticket.tokenNumber || 'T-00'}</h1>
-              <p className="pt-2 text-sm font-medium text-teal-50/80">
+              <p className={`pt-2 text-sm font-medium ${
+                ticket.queueType === 'PRIORITY' ? 'text-rose-50/80' : 'text-teal-50/80'
+              }`}>
                 🏥 Room: <span className="font-bold">{ticket.roomNumber || 'OPD'}</span>
               </p>
             </div>
@@ -252,7 +541,6 @@ function PatientDashboard({ user }) {
         )}
 
       </div>
-
     </div>
   );
 }

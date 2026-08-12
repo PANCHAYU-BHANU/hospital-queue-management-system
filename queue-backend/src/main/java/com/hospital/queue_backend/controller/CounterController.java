@@ -34,4 +34,9 @@ public class CounterController {
     public java.util.List<com.hospital.queue_backend.entity.CounterStaff> getAllCounters() {
         return counterService.getAllCounters();
     }
+
+    @GetMapping("/hospital/{hospitalId}")
+    public java.util.List<com.hospital.queue_backend.entity.CounterStaff> getCountersByHospital(@PathVariable Long hospitalId) {
+        return counterService.getCountersByHospitalId(hospitalId);
+    }
 }

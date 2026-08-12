@@ -29,4 +29,5 @@ public class Hospital {
 
     private String address;
 
+    private String contactNumber;
 }

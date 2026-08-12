@@ -24,4 +24,16 @@ public class Patient {
     private int age;
 
     private String gender;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String profilePictureBase64;
+
+    private String homeAddress;
+
+    private String alternateAddress;
+
+    private String bloodGroup;
+
+    private String emergencyContact;
 }

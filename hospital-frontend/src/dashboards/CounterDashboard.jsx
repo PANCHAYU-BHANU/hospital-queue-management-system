@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 function CounterDashboard({ user }) {
   const [pendingTokens, setPendingTokens] = useState([]);
+  const [pendingPayments, setPendingPayments] = useState([]);
   const [actionLoading, setActionLoading] = useState(null); 
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -14,16 +15,25 @@ function CounterDashboard({ user }) {
   const [offlinePriority, setOfflinePriority] = useState(false);
   const [offlineLoading, setOfflineLoading] = useState(false);
 
-  // 🔄 1. Pending Approvals Backend එකෙන් ගන්න ලොජික් එක
-  const fetchPendingApprovals = async () => {
+  const hospitalId = user?.hospitalId || 1;
+
+  // 🔄 1. Pending Approvals & Payments Backend එකෙන් ගන්න ලොජික් එක
+  const fetchData = async () => {
     try {
+      // Pending Approvals
       const response = await fetch('http://localhost:8080/api/queue/pending-approvals');
       if (response.ok) {
         const data = await response.json();
         setPendingTokens(data);
-      } else {
-        setErrorMsg('Pending ලිස්ට් එක ලෝඩ් කරගන්න බැරි වුණා මචන්.');
       }
+
+      // Pending Payments
+      const paymentResponse = await fetch(`http://localhost:8080/api/queue/pending-payments/${hospitalId}`);
+      if (paymentResponse.ok) {
+        const pData = await paymentResponse.json();
+        setPendingPayments(pData);
+      }
+
     } catch (error) {
       console.error("Fetch pending error:", error);
       setErrorMsg('සර්වර් එක කනෙක්ට් නෑ මචන්! 🔌');
@@ -31,10 +41,10 @@ function CounterDashboard({ user }) {
   };
 
   useEffect(() => {
-    fetchPendingApprovals();
-    const interval = setInterval(fetchPendingApprovals, 5000);
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [hospitalId]);
 
   // 🚀 2. "Approve" බටන් එක
   const handleApprove = async (queueId) => {
@@ -49,7 +59,7 @@ function CounterDashboard({ user }) {
 
       if (response.ok) {
         setSuccessMsg(`ටෝකන් එක සාර්ථකව Approve කළා මචන්! ✅`);
-        fetchPendingApprovals();
+        fetchData();
         setTimeout(() => setSuccessMsg(''), 3000);
       } else {
         setErrorMsg('ටෝකන් එක Approve කරන්න බැරි වුණා.');
@@ -62,7 +72,58 @@ function CounterDashboard({ user }) {
     }
   };
 
-  // 📝 3. Offline Patient Registration
+  const handleReject = async (queueId) => {
+    setActionLoading(queueId);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/queue/reject/${queueId}`, {
+        method: 'PUT',
+      });
+
+      if (response.ok) {
+        setSuccessMsg(`ටෝකන් එක සාර්ථකව Reject කළා! ❌`);
+        fetchData();
+        setTimeout(() => setSuccessMsg(''), 3000);
+      } else {
+        setErrorMsg('ටෝකන් එක Reject කරන්න බැරි වුණා.');
+      }
+    } catch (error) {
+      console.error("Reject error:", error);
+      setErrorMsg('සර්වර් එකේ අවුලක් මචන්!');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // 💰 3. Complete Payment
+  const handleCompletePayment = async (queueId) => {
+    setActionLoading(`pay-${queueId}`);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/queue/payment-complete/${queueId}`, {
+        method: 'PUT',
+      });
+
+      if (response.ok) {
+        setSuccessMsg(`Payment completed! Patient consultation fully complete! ✅`);
+        fetchData();
+        setTimeout(() => setSuccessMsg(''), 3000);
+      } else {
+        setErrorMsg('Failed to complete payment.');
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      setErrorMsg('සර්වර් එකේ අවුලක් මචන්!');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // 📝 4. Offline Patient Registration
   const handleOfflineRegistration = async (e) => {
     e.preventDefault();
     setOfflineLoading(true);
@@ -75,7 +136,7 @@ function CounterDashboard({ user }) {
       age: parseInt(offlineAge),
       gender: offlineGender,
       doctorId: 1, // Default OPD doctor
-      isSpecialNeed: offlinePriority
+      specialNeed: offlinePriority
     };
 
     try {
@@ -91,7 +152,7 @@ function CounterDashboard({ user }) {
         setOfflineName('');
         setOfflineAge('');
         setOfflinePriority(false);
-        fetchPendingApprovals();
+        fetchData();
       } else {
         setErrorMsg('Error: ' + text);
       }
@@ -104,7 +165,7 @@ function CounterDashboard({ user }) {
   };
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-8 animate-fade-in p-8">
       
       {/* 📢 Live Feedback Notifications */}
       {successMsg && (
@@ -125,8 +186,8 @@ function CounterDashboard({ user }) {
             <span className="text-teal-600">⏳</span> Token Approval Queue List
           </h3>
           <button 
-            onClick={fetchPendingApprovals}
-            className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition"
+            onClick={fetchData}
+            className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition shadow-sm"
           >
             🔄 Refresh List
           </button>
@@ -159,7 +220,7 @@ function CounterDashboard({ user }) {
                       <span className="font-semibold text-slate-600">{token.department}</span>
                     </td>
                     <td className="px-6 py-4">
-                      {token.isPriority ? (
+                      {token.queueType === 'PRIORITY' ? (
                         <span className="px-2 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-black rounded uppercase tracking-wider">
                           ⚠️ HIGH
                         </span>
@@ -170,13 +231,22 @@ function CounterDashboard({ user }) {
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => handleApprove(token.id)}
-                        disabled={actionLoading === token.id}
-                        className="px-4 py-2 text-xs font-black text-white transition bg-teal-600 shadow-md hover:bg-teal-700 disabled:bg-slate-200 rounded-xl"
-                      >
-                        {actionLoading === token.id ? 'Approving...' : '✓ Approve'}
-                      </button>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => handleReject(token.id)}
+                          disabled={actionLoading === token.id}
+                          className="px-4 py-2 text-xs font-black text-white transition bg-rose-500 shadow-md hover:bg-rose-600 disabled:bg-slate-200 rounded-xl"
+                        >
+                          {actionLoading === token.id ? '...' : '✕ Reject'}
+                        </button>
+                        <button
+                          onClick={() => handleApprove(token.id)}
+                          disabled={actionLoading === token.id}
+                          className="px-4 py-2 text-xs font-black text-white transition bg-teal-600 shadow-md hover:bg-teal-700 disabled:bg-slate-200 rounded-xl"
+                        >
+                          {actionLoading === token.id ? 'Approving...' : '✓ Approve'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -192,8 +262,59 @@ function CounterDashboard({ user }) {
         )}
       </div>
 
+      {/* 💰 Pending Payments Table Card */}
+      <div className="overflow-hidden bg-white border shadow-sm rounded-3xl border-teal-200 shadow-teal-500/5 mt-8">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-teal-100 bg-teal-50/50">
+          <h3 className="flex items-center gap-2 text-lg font-black text-teal-800">
+            <span className="text-2xl">💰</span> Pending Pharmacy Payments
+          </h3>
+        </div>
+
+        {pendingPayments.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="text-xs font-bold tracking-wider uppercase border-b border-teal-100 text-teal-600 bg-teal-50/30">
+                  <th className="px-6 py-4">Token No</th>
+                  <th className="px-6 py-4">Patient Name</th>
+                  <th className="px-6 py-4">Doctor</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm font-medium divide-y divide-teal-50 text-slate-700">
+                {pendingPayments.map((token) => (
+                  <tr key={token.id} className="transition hover:bg-teal-50/40">
+                    <td className="px-6 py-4">
+                      <span className="px-3 py-1 text-xs font-black text-teal-700 rounded-lg bg-teal-50">
+                        #{token.tokenNumber}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 font-bold text-slate-800">{token.patientName}</td>
+                    <td className="px-6 py-4 text-slate-500">Dr. {token.doctorName}</td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleCompletePayment(token.id)}
+                        disabled={actionLoading === `pay-${token.id}`}
+                        className="px-6 py-2.5 text-xs font-black text-white transition bg-teal-600 shadow-md hover:bg-teal-700 disabled:bg-slate-300 rounded-xl"
+                      >
+                        {actionLoading === `pay-${token.id}` ? 'Processing...' : '💵 Payment Received'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center py-10 space-y-2 text-center text-slate-400">
+             <span className="block text-4xl">🎉</span>
+             <p className="font-bold text-slate-500">No pending payments for pharmacy.</p>
+          </div>
+        )}
+      </div>
+
       {/* 🏥 Offline Registration Form */}
-      <div className="bg-white p-8 rounded-3xl border border-slate-200/60 shadow-sm">
+      <div className="bg-white p-8 rounded-3xl border border-slate-200/60 shadow-sm mt-8">
         <h3 className="flex items-center gap-2 text-lg font-black text-slate-800 mb-6">
           <span className="text-teal-600">📝</span> Register Walk-in Patient
         </h3>
