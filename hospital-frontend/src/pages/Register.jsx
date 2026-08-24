@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
+import { useTranslation } from 'react-i18next';
 
 function Register({ onSwitchToLogin }) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     nicNumber: '',
     fullName: '',
@@ -66,7 +68,7 @@ function Register({ onSwitchToLogin }) {
     const srilankaPhoneRegex = /^(0)[0-9]{9}$/;
 
     if (!srilankaPhoneRegex.test(phone)) {
-      setPhoneError('කරුණාකර නිවැරදි දුරකථන අංකයක් ඇතුළත් කරන්න (eg: 0771234567)');
+      setPhoneError(t('register.invalid_phone', 'Please enter a valid phone number (eg: 0771234567)'));
     } else {
       setPhoneError('');
     }
@@ -94,11 +96,11 @@ function Register({ onSwitchToLogin }) {
       if (message.includes('Error')) {
         Swal.fire('Error', message, 'error');
       } else {
-        setIsSuccess(true); // ◄ මෙතනදී Custom Success ස්ක්‍රීන් එක ඔන් කරනවා මචන්!
+        setIsSuccess(true); // ◄ මෙතනදී Custom Success ස්ක්‍රීන් එක ඔන් කරනවා!
       }
     } catch (error) {
       console.error('Registration Error:', error);
-      Swal.fire('Error', 'Backend එක Connect කරගන්න බැරි වුණා මචන්!', 'error');
+      Swal.fire('Error', t('register.backend_connection_failed', 'Failed to connect to the backend server!'), 'error');
     } finally {
       setLoading(false);
     }
@@ -115,16 +117,16 @@ function Register({ onSwitchToLogin }) {
               ✓
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-black tracking-tight text-slate-800">Registration Successful!</h2>
+              <h2 className="text-2xl font-black tracking-tight text-slate-800">{t('register.registration_successful', 'Registration Successful!')}</h2>
               <p className="px-4 text-sm font-medium text-slate-500">
-                ඔබේ ගිණුම සාර්ථකව සාදන ලදී. ඔබට දැන් පද්ධතියට ඇතුළු විය හැක.
+                {t('register.account_created_success', 'Your account has been created successfully. You can now login to the system.')}
               </p>
             </div>
             <button
               onClick={onSwitchToLogin}
               className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20 transition transform active:scale-[0.99] text-sm"
             >
-              Go to Login Page 🚀
+              {t('register.go_to_login', 'Go to Login Page 🚀')}
             </button>
           </div>
         ) : (
@@ -133,46 +135,46 @@ function Register({ onSwitchToLogin }) {
           <div className="space-y-5">
             <div className="space-y-2 text-center">
               <div className="inline-flex p-3 text-2xl text-teal-600 border border-teal-100 bg-teal-50 rounded-2xl">🏥</div>
-              <h2 className="text-3xl font-black tracking-tight text-slate-800">Create Account</h2>
-              <p className="text-sm font-semibold text-slate-400">Suwasetha Queue Management System</p>
+              <h2 className="text-3xl font-black tracking-tight text-slate-800">{t('register.create_account', 'Create Account')}</h2>
+              <p className="text-sm font-semibold text-slate-400">{t('register.system_name', 'Suwasetha Queue Management System')}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block mb-1 text-xs font-bold tracking-wider uppercase text-slate-400">Full Name</label>
+                <label className="block mb-1 text-xs font-bold tracking-wider uppercase text-slate-400">{t('register.full_name', 'Full Name')}</label>
                 <input
                   type="text"
                   name="fullName"
                   required
                   value={formData.fullName}
                   onChange={handleChange}
-                  placeholder="Enter your full name"
+                  placeholder={t('register.enter_full_name', 'Enter your full name')}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-slate-50 transition font-medium text-slate-700 text-sm"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block mb-1 text-xs font-bold tracking-wider uppercase text-slate-400">NIC Number</label>
+                  <label className="block mb-1 text-xs font-bold tracking-wider uppercase text-slate-400">{t('register.nic_number', 'NIC Number')}</label>
                   <input
                     type="text"
                     name="nicNumber"
                     required
                     value={formData.nicNumber}
                     onChange={handleChange}
-                    placeholder="eg: 20010920..."
+                    placeholder={t('register.nic_placeholder', 'eg: 20010920...')}
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-slate-50 transition font-medium text-slate-700 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block mb-1 text-xs font-bold tracking-wider uppercase text-slate-400">Phone Number</label>
+                  <label className="block mb-1 text-xs font-bold tracking-wider uppercase text-slate-400">{t('register.phone_number', 'Phone Number')}</label>
                   <input
                     type="text"
                     name="phoneNumber"
                     required
                     value={formData.phoneNumber}
                     onChange={handleChange}
-                    placeholder="eg: 0771234567"
+                    placeholder={t('register.phone_placeholder', 'eg: 0771234567')}
                     className={`w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 bg-slate-50 transition font-medium text-slate-700 text-sm ${
                       phoneError ? 'border-red-400 focus:ring-red-400' : 'border-slate-200 focus:ring-teal-500'
                     }`}
@@ -191,18 +193,18 @@ function Register({ onSwitchToLogin }) {
               {formData.gender && formData.age && (
                 <div className="grid grid-cols-2 gap-4 p-3 text-center border border-teal-100 bg-teal-50/50 rounded-xl">
                   <div>
-                    <span className="block text-[10px] font-bold text-teal-600 uppercase">Gender</span>
-                    <span className="text-sm font-bold text-slate-700">{formData.gender}</span>
+                    <span className="block text-[10px] font-bold text-teal-600 uppercase">{t('register.gender', 'Gender')}</span>
+                    <span className="text-sm font-bold text-slate-700">{formData.gender === 'MALE' ? t('counter_dashboard.male', 'Male') : formData.gender === 'FEMALE' ? t('counter_dashboard.female', 'Female') : formData.gender}</span>
                   </div>
                   <div>
-                    <span className="block text-[10px] font-bold text-teal-600 uppercase">Calculated Age</span>
-                    <span className="text-sm font-bold text-slate-700">{formData.age} Yrs</span>
+                    <span className="block text-[10px] font-bold text-teal-600 uppercase">{t('register.calculated_age', 'Calculated Age')}</span>
+                    <span className="text-sm font-bold text-slate-700">{formData.age} {t('register.yrs', 'Yrs')}</span>
                   </div>
                 </div>
               )}
 
               <div>
-                <label className="block mb-1 text-xs font-bold tracking-wider uppercase text-slate-400">Password</label>
+                <label className="block mb-1 text-xs font-bold tracking-wider uppercase text-slate-400">{t('register.password', 'Password')}</label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -232,21 +234,20 @@ function Register({ onSwitchToLogin }) {
                 </div>
               </div>
 
-              {/* Phone Error එකක් තියෙනවා නම් බටන් එක Disabled වෙනවා මචන් */}
               <button
                 type="submit"
                 disabled={loading || !!phoneError}
                 className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-lg transition transform active:scale-[0.99] disabled:bg-slate-300 text-sm"
               >
-                {loading ? 'Registering...' : 'Register Account 🚀'}
+                {loading ? t('register.registering', 'Registering...') : t('register.register_account', 'Register Account 🚀')}
               </button>
             </form>
 
             <div className="pt-2 text-center">
               <p className="text-sm font-medium text-slate-500">
-                Already have an account?{' '}
+                {t('register.already_have_account', 'Already have an account? ')}
                 <button onClick={onSwitchToLogin} className="font-bold text-teal-600 underline transition hover:text-teal-700">
-                  Login Here
+                  {t('register.login_here', 'Login Here')}
                 </button>
               </p>
             </div>

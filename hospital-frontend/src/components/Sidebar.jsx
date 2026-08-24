@@ -1,55 +1,59 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './LanguageSwitcher';
 
 function Sidebar({ role, fullName, onLogout, activeTab, setActiveTab }) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false); // Mobile එකේදී Sidebar එක open/close කරන්න
 
   const getMenuItems = () => {
     switch (role) {
       case 'ADMIN':
         return [
-          { name: 'Manage Doctors', icon: '👨‍⚕️' },
-          { name: 'Manage Counters', icon: '🧑‍💻' },
-          { name: 'Manage Communication Centers', icon: '📞' },
-          { name: 'Manage OPD Rooms', icon: '🚪' },
-          { name: 'Manage Pharmacists', icon: '💊' },
-          { name: 'Hospital Settings', icon: '⚙️' }
+          { name: 'Manage Doctors', label: t('sidebar.manage_doctors', 'Manage Doctors'), icon: '👨‍⚕️' },
+          { name: 'Manage Counters', label: t('sidebar.manage_counters', 'Manage Counters'), icon: '🧑‍💻' },
+          { name: 'Manage Communication Centers', label: t('sidebar.manage_comm_centers', 'Manage Comm Centers'), icon: '📞' },
+          { name: 'Manage OPD Rooms', label: t('sidebar.manage_opd', 'Manage OPD Rooms'), icon: '🚪' },
+          { name: 'Manage Pharmacists', label: t('sidebar.manage_pharmacists', 'Manage Pharmacists'), icon: '💊' },
+          { name: 'Hospital Settings', label: t('sidebar.hospital_settings', 'Hospital Settings'), icon: '⚙️' }
         ];
       case 'DOCTOR':
         return [
-          { name: 'Live Queue', icon: '👥' },
-          { name: 'My Profile', icon: '👨‍⚕️' }
+          { name: 'Live Queue', label: t('sidebar.live_queue', 'Live Queue'), icon: '👥' },
+          { name: 'My Profile', label: t('sidebar.my_profile', 'My Profile'), icon: '👨‍⚕️' }
         ];
       case 'PHARMACIST':
         return [
-          { name: 'Pharmacy Queue', icon: '📋' },
-          { name: 'Medicine Inventory', icon: '💊' },
-          { name: 'My Profile', icon: '🧑‍💼' }
+          { name: 'Pharmacy Queue', label: t('sidebar.pharmacy_queue', 'Pharmacy Queue'), icon: '📋' },
+          { name: 'Medicine Inventory', label: t('sidebar.medicine_inventory', 'Medicine Inventory'), icon: '💊' },
+          { name: 'My Profile', label: t('sidebar.my_profile', 'My Profile'), icon: '🧑‍💼' }
         ];
       case 'COUNTER':
         return [
-          { name: 'Pending Approvals', icon: '⏳' },
-          { name: 'All Tokens', icon: '🎟️' },
-          { name: 'Hospital Stats', icon: '📊' }
+          { name: 'Pending Approvals', label: t('sidebar.pending_approvals', 'Pending Approvals'), icon: '⏳' },
+          { name: 'All Tokens', label: t('sidebar.all_tokens', 'All Tokens'), icon: '🎟️' },
+          { name: 'Hospital Stats', label: t('sidebar.hospital_stats', 'Hospital Stats'), icon: '📊' }
         ];
       case 'SUPER_ADMIN':
         return [
-          { name: 'Hospital Management', icon: '🏥' },
-          { name: 'Admin Management', icon: '👨‍💼' },
-          { name: 'Assign Doctors', icon: '👨‍⚕️' },
-          { name: 'Doctor Transfers', icon: '🔄' },
-          { name: 'Doctor Deletions', icon: '🗑️' }
+          { name: 'Hospital Management', label: t('sidebar.hospital_management', 'Hospital Management'), icon: '🏥' },
+          { name: 'System Analytics', label: t('sidebar.system_analytics', 'System Analytics'), icon: '📈' },
+          { name: 'Admin Management', label: t('sidebar.admin_management', 'Admin Management'), icon: '👨‍💼' },
+          { name: 'Assign Doctors', label: t('sidebar.assign_doctors', 'Assign Doctors'), icon: '👨‍⚕️' },
+          { name: 'Doctor Transfers', label: t('sidebar.doctor_transfers', 'Doctor Transfers'), icon: '🔄' },
+          { name: 'Doctor Deletions', label: t('sidebar.doctor_deletions', 'Doctor Deletions'), icon: '🗑️' }
         ];
       case 'COMMUNICATION':
         return [
-          { name: 'Communication Center', icon: '📞' }
+          { name: 'Communication Center', label: t('sidebar.communication_center', 'Communication Center'), icon: '📞' }
         ];
       case 'PATIENT':
       default:
         return [
-          { name: 'Get Token', icon: '🎫' },
-          { name: 'My Queue Status', icon: '⏱️' },
-          { name: 'Medical Records', icon: '📁' },
-          { name: 'My Profile', icon: '🧑‍💼' }
+          { name: 'Get Token', label: t('sidebar.get_token', 'Get Token'), icon: '🎫' },
+          { name: 'My Queue Status', label: t('sidebar.my_queue_status', 'My Queue Status'), icon: '⏱️' },
+          { name: 'Medical Records', label: t('sidebar.medical_records', 'Medical Records'), icon: '📁' },
+          { name: 'My Profile', label: t('sidebar.my_profile', 'My Profile'), icon: '🧑‍💼' }
         ];
     }
   };
@@ -99,12 +103,16 @@ function Sidebar({ role, fullName, onLogout, activeTab, setActiveTab }) {
           </div>
 
           {/* User Info Card */}
-          <div className="p-4 mb-6 border bg-slate-800/50 rounded-xl border-slate-800">
-            <p className="text-xs font-semibold tracking-wider uppercase text-slate-400">Logged in as</p>
+          <div className="p-4 mb-4 border bg-slate-800/50 rounded-xl border-slate-800 relative">
+            <p className="text-xs font-semibold tracking-wider uppercase text-slate-400 mt-2">{t('sidebar.logged_in_as', 'Logged in as')}</p>
             <p className="font-bold text-slate-200 mt-0.5 truncate">{fullName || 'User Name'}</p>
             <span className="inline-block mt-2 px-2.5 py-0.5 bg-teal-500/10 text-teal-400 text-xs font-bold rounded-md border border-teal-500/20">
               {role}
             </span>
+          </div>
+
+          <div className="mb-6">
+            <LanguageSwitcher className="w-full bg-slate-800 text-slate-200 border-slate-700" />
           </div>
 
           {/* Dynamic Navigation Links */}
@@ -125,7 +133,7 @@ function Sidebar({ role, fullName, onLogout, activeTab, setActiveTab }) {
                 }`}
               >
                 <span className="text-lg">{item.icon}</span>
-                <span>{item.name}</span>
+                <span>{item.label}</span>
               </a>
             ))}
           </nav>
@@ -137,7 +145,7 @@ function Sidebar({ role, fullName, onLogout, activeTab, setActiveTab }) {
           className="flex items-center w-full gap-3 px-4 py-3 font-semibold text-left transition duration-150 text-rose-400 hover:bg-rose-500/10 rounded-xl"
         >
           <span>🚪</span>
-          <span>Logout</span>
+          <span>{t('sidebar.logout', 'Logout')}</span>
         </button>
       </div>
     </>

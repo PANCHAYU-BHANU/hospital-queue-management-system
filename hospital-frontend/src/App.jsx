@@ -204,7 +204,7 @@ function App() {
       
       {/* 🏢 Main Content Area */}
       <div className="flex-1 p-6 mt-16 md:p-8 md:mt-0">
-        {['Get Token', 'Live Queue', 'Pending Approvals', 'Dashboard', 'Manage Doctors', 'Manage Counters', 'Manage Communication Centers', 'Manage OPD Rooms', 'Doctor Transfers', 'Doctor Deletions', 'Pharmacy Queue', 'Medicine Inventory', 'Hospital Management', 'Admin Management', 'Assign Doctors', 'My Profile', 'All Tokens', 'Hospital Stats', 'Communication Center', 'Manage Pharmacists'].includes(activeTab) || !activeTab ? (
+        {['Get Token', 'Live Queue', 'Pending Approvals', 'Dashboard', 'Manage Doctors', 'Manage Counters', 'Manage Communication Centers', 'Manage OPD Rooms', 'Doctor Transfers', 'Doctor Deletions', 'Pharmacy Queue', 'Medicine Inventory', 'Hospital Management', 'System Analytics', 'Admin Management', 'Assign Doctors', 'My Profile', 'All Tokens', 'Hospital Stats', 'Communication Center', 'Manage Pharmacists'].includes(activeTab) || !activeTab ? (
           user.role === 'PATIENT' ? (
             activeTab === 'My Profile' ? (
               <PatientProfile user={user} />

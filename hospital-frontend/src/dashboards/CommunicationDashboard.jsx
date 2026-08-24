@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
+import { useTranslation } from 'react-i18next';
 
 function CommunicationDashboard({ user }) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('Verify Patient');
 
   // Verify Patient State
@@ -56,13 +58,13 @@ function CommunicationDashboard({ user }) {
       });
       const text = await res.text();
       if (text.includes("Error")) {
-        Swal.fire('Error', text, 'error');
+        Swal.fire(t('communication_dashboard.server_connection_failed', 'Error'), text, 'error');
       } else {
         setOtpSent(true);
-        toast.success("OTP sent to patient's mobile");
+        toast.success(t('communication_dashboard.otp_sent', "OTP sent to patient's mobile"));
       }
     } catch (err) {
-      Swal.fire('Error', 'Server connection failed', 'error');
+      Swal.fire(t('communication_dashboard.server_connection_failed', 'Error'), t('communication_dashboard.server_connection_failed', 'Server connection failed'), 'error');
     }
     setLoading(false);
   };
@@ -78,9 +80,9 @@ function CommunicationDashboard({ user }) {
       });
       const text = await res.text();
       if (text.includes("Error")) {
-        Swal.fire('Error', text, 'error');
+        Swal.fire(t('communication_dashboard.server_connection_failed', 'Error'), text, 'error');
       } else {
-        Swal.fire('Verified', 'Patient has been verified via OTP.', 'success');
+        Swal.fire(t('communication_dashboard.patient_verified_title', 'Verified'), t('communication_dashboard.patient_verified_msg', 'Patient has been verified via OTP.'), 'success');
         // Extract patient ID
         const match = text.match(/PatientId: (\d+)/);
         if (match) {
@@ -89,7 +91,7 @@ function CommunicationDashboard({ user }) {
         }
       }
     } catch (err) {
-      Swal.fire('Error', 'Server connection failed', 'error');
+      Swal.fire(t('communication_dashboard.server_connection_failed', 'Error'), t('communication_dashboard.server_connection_failed', 'Server connection failed'), 'error');
     }
     setLoading(false);
   };
@@ -104,14 +106,14 @@ function CommunicationDashboard({ user }) {
       });
       const text = await res.text();
       if (text.includes("Error")) {
-        Swal.fire('Error', text, 'error');
+        Swal.fire(t('communication_dashboard.server_connection_failed', 'Error'), text, 'error');
       } else {
-        Swal.fire('Success', 'Patient registered successfully. Now go to Verify Patient tab and authenticate them.', 'success');
+        Swal.fire(t('communication_dashboard.server_connection_failed', 'Success'), t('communication_dashboard.patient_registered_msg', 'Patient registered successfully. Now go to Verify Patient tab and authenticate them.'), 'success');
         setActiveTab('Verify Patient');
         setSearchNic(registerData.nicNumber);
       }
     } catch (err) {
-      Swal.fire('Error', 'Registration failed', 'error');
+      Swal.fire(t('communication_dashboard.server_connection_failed', 'Error'), t('communication_dashboard.registration_failed', 'Registration failed'), 'error');
     }
     setLoading(false);
   };
@@ -137,15 +139,15 @@ function CommunicationDashboard({ user }) {
       if (res.ok) {
         const ticket = await res.json();
         Swal.fire({
-          title: 'Token Generated!',
+          title: t('communication_dashboard.token_generated_title', 'Token Generated!'),
           html: `
             <div class="text-left space-y-2 mt-4">
-              <p><strong>Token:</strong> <span class="text-2xl font-black text-teal-600">${ticket.tokenNumber}</span></p>
-              <p><strong>Doctor:</strong> ${ticket.doctorName}</p>
-              <p><strong>Room:</strong> ${ticket.roomNumber}</p>
-              <p><strong>Status:</strong> ${ticket.status}</p>
+              <p><strong>${t('communication_dashboard.token_label', 'Token:')}</strong> <span class="text-2xl font-black text-teal-600">${ticket.tokenNumber}</span></p>
+              <p><strong>${t('communication_dashboard.doctor_label', 'Doctor:')}</strong> ${ticket.doctorName}</p>
+              <p><strong>${t('communication_dashboard.room_label', 'Room:')}</strong> ${ticket.roomNumber}</p>
+              <p><strong>${t('communication_dashboard.status_label', 'Status:')}</strong> ${ticket.status}</p>
             </div>
-            <p class="mt-4 text-sm text-slate-500">Please provide this ticket number to the patient.</p>
+            <p class="mt-4 text-sm text-slate-500">${t('communication_dashboard.provide_ticket_msg', 'Please provide this ticket number to the patient.')}</p>
           `,
           icon: 'success'
         });
@@ -157,10 +159,10 @@ function CommunicationDashboard({ user }) {
         setOtpCode('');
       } else {
         const text = await res.text();
-        Swal.fire('Error', text, 'error');
+        Swal.fire(t('communication_dashboard.server_connection_failed', 'Error'), text, 'error');
       }
     } catch (err) {
-      Swal.fire('Error', 'Failed to generate token', 'error');
+      Swal.fire(t('communication_dashboard.server_connection_failed', 'Error'), t('communication_dashboard.failed_generate_token', 'Failed to generate token'), 'error');
     }
     
     setLoading(false);
@@ -176,8 +178,8 @@ function CommunicationDashboard({ user }) {
             <span className="text-4xl">📞</span>
           </div>
           <div>
-            <h2 className="text-2xl font-black text-slate-800">Communication Center Dashboard</h2>
-            <p className="font-medium text-slate-500">{user.centerName || 'Center'} - {user.hospitalId ? 'Hospital Attached' : 'No Hospital'}</p>
+            <h2 className="text-2xl font-black text-slate-800">{t('communication_dashboard.comm_center_dashboard', 'Communication Center Dashboard')}</h2>
+            <p className="font-medium text-slate-500">{user.centerName || t('communication_dashboard.center', 'Center')} - {user.hospitalId ? t('communication_dashboard.hospital_attached', 'Hospital Attached') : t('communication_dashboard.no_hospital', 'No Hospital')}</p>
           </div>
         </div>
 
@@ -188,13 +190,13 @@ function CommunicationDashboard({ user }) {
               onClick={() => setActiveTab('Verify Patient')}
               className={`px-6 py-3 rounded-xl font-bold transition ${activeTab === 'Verify Patient' ? 'bg-teal-600 text-white shadow-md' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'}`}
             >
-              Verify Patient (OTP)
+              {t('communication_dashboard.verify_patient_tab', 'Verify Patient (OTP)')}
             </button>
             <button 
               onClick={() => setActiveTab('Register Patient')}
               className={`px-6 py-3 rounded-xl font-bold transition ${activeTab === 'Register Patient' ? 'bg-teal-600 text-white shadow-md' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'}`}
             >
-              Register New Patient
+              {t('communication_dashboard.register_new_patient_tab', 'Register New Patient')}
             </button>
           </div>
         )}
@@ -206,29 +208,29 @@ function CommunicationDashboard({ user }) {
             <div className="space-y-6">
               <div className="flex justify-between items-center p-4 bg-teal-50 border border-teal-100 rounded-xl">
                 <div>
-                  <h3 className="text-lg font-black text-teal-800">Patient Verified</h3>
-                  <p className="text-teal-600 font-medium text-sm">NIC: {verifiedPatient.nicNumber}</p>
+                  <h3 className="text-lg font-black text-teal-800">{t('communication_dashboard.patient_verified_title', 'Patient Verified')}</h3>
+                  <p className="text-teal-600 font-medium text-sm">{t('communication_dashboard.nic_label', 'NIC: ')}{verifiedPatient.nicNumber}</p>
                 </div>
                 <button 
                   onClick={() => { setVerifiedPatient(null); setOtpSent(false); setOtpCode(''); }}
                   className="px-4 py-2 text-sm font-bold text-rose-600 bg-rose-100 rounded-lg hover:bg-rose-200"
                 >
-                  Cancel / Start Over
+                  {t('communication_dashboard.cancel_start_over', 'Cancel / Start Over')}
                 </button>
               </div>
 
               <form onSubmit={handleGenerateToken} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-slate-400">Select Doctor</label>
+                  <label className="text-xs font-bold uppercase text-slate-400">{t('communication_dashboard.select_doctor', 'Select Doctor')}</label>
                   <select 
                     required 
                     value={selectedDoctorId} 
                     onChange={e => setSelectedDoctorId(e.target.value)}
                     className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50 focus:ring-2 focus:ring-teal-500"
                   >
-                    <option value="" disabled>Select a doctor...</option>
+                    <option value="" disabled>{t('communication_dashboard.select_doctor_placeholder', 'Select a doctor...')}</option>
                     {doctors.map(doc => (
-                      <option key={doc.id} value={doc.id}>{doc.doctorName} ({doc.specialization}) - Room: {doc.roomNumber}</option>
+                      <option key={doc.id} value={doc.id}>{doc.doctorName} ({doc.specialization}) - {t('communication_dashboard.room_label', 'Room:')} {doc.roomNumber}</option>
                     ))}
                   </select>
                 </div>
@@ -242,7 +244,7 @@ function CommunicationDashboard({ user }) {
                     className="w-5 h-5 text-teal-600 rounded focus:ring-teal-500"
                   />
                   <label htmlFor="specialNeed" className="font-semibold text-amber-800">
-                    Patient has special needs / Disability priority
+                    {t('communication_dashboard.special_need_priority_label', 'Patient has special needs / Disability priority')}
                   </label>
                 </div>
 
@@ -251,7 +253,7 @@ function CommunicationDashboard({ user }) {
                   disabled={loading}
                   className="w-full py-4 bg-teal-600 text-white font-black rounded-xl shadow-lg hover:bg-teal-700 transition"
                 >
-                  {loading ? 'Generating...' : 'Generate Queue Token'}
+                  {loading ? t('communication_dashboard.generating', 'Generating...') : t('communication_dashboard.generate_queue_token', 'Generate Queue Token')}
                 </button>
               </form>
             </div>
@@ -259,15 +261,15 @@ function CommunicationDashboard({ user }) {
             <>
               {activeTab === 'Verify Patient' ? (
                 <div className="space-y-6 max-w-md mx-auto">
-                  <h3 className="text-xl font-black text-slate-800 text-center">Authenticate Patient</h3>
-                  <p className="text-slate-500 text-center text-sm mb-4">You must authenticate the patient using their NIC and SMS OTP before generating a token.</p>
+                  <h3 className="text-xl font-black text-slate-800 text-center">{t('communication_dashboard.authenticate_patient_title', 'Authenticate Patient')}</h3>
+                  <p className="text-slate-500 text-center text-sm mb-4">{t('communication_dashboard.authenticate_patient_desc', 'You must authenticate the patient using their NIC and SMS OTP before generating a token.')}</p>
                   
                   {!otpSent ? (
                     <form onSubmit={handleSendOtp} className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase text-slate-400">Patient NIC Number</label>
+                        <label className="text-xs font-bold uppercase text-slate-400">{t('communication_dashboard.patient_nic_number', 'Patient NIC Number')}</label>
                         <input 
-                          type="text" required placeholder="Enter NIC"
+                          type="text" required placeholder={t('communication_dashboard.enter_nic_placeholder', 'Enter NIC')}
                           className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50 focus:ring-2 focus:ring-teal-500 text-center text-lg tracking-widest"
                           value={searchNic} onChange={e => setSearchNic(e.target.value)}
                         />
@@ -276,13 +278,13 @@ function CommunicationDashboard({ user }) {
                         type="submit" disabled={loading || !searchNic}
                         className="w-full py-3.5 bg-teal-600 text-white font-black rounded-xl shadow-lg hover:bg-teal-700 transition disabled:opacity-50"
                       >
-                        {loading ? 'Sending...' : 'Send OTP via SMS'}
+                        {loading ? t('communication_dashboard.sending', 'Sending...') : t('communication_dashboard.send_otp_btn', 'Send OTP via SMS')}
                       </button>
                     </form>
                   ) : (
                     <form onSubmit={handleVerifyOtp} className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase text-slate-400">Enter OTP Code</label>
+                        <label className="text-xs font-bold uppercase text-slate-400">{t('communication_dashboard.enter_otp_code', 'Enter OTP Code')}</label>
                         <input 
                           type="text" required placeholder="123456"
                           className="w-full px-4 py-4 font-black border-2 border-teal-200 rounded-xl bg-teal-50 focus:ring-2 focus:ring-teal-500 text-center text-2xl tracking-[0.5em]"
@@ -293,13 +295,13 @@ function CommunicationDashboard({ user }) {
                         type="submit" disabled={loading || !otpCode}
                         className="w-full py-3.5 bg-teal-600 text-white font-black rounded-xl shadow-lg hover:bg-teal-700 transition disabled:opacity-50"
                       >
-                        {loading ? 'Verifying...' : 'Verify OTP & Proceed'}
+                        {loading ? t('communication_dashboard.verifying', 'Verifying...') : t('communication_dashboard.verify_otp_proceed', 'Verify OTP & Proceed')}
                       </button>
                       <button 
                         type="button" onClick={() => setOtpSent(false)}
                         className="w-full py-2 text-slate-500 font-bold hover:text-slate-700"
                       >
-                        Try different NIC
+                        {t('communication_dashboard.try_different_nic', 'Try different NIC')}
                       </button>
                     </form>
                   )}
@@ -307,21 +309,21 @@ function CommunicationDashboard({ user }) {
               ) : (
                 <form onSubmit={handleRegisterPatient} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="col-span-1 md:col-span-2">
-                    <h3 className="text-xl font-black text-slate-800">Register New Patient</h3>
-                    <p className="text-slate-500 text-sm">Register a patient without a smartphone. They will receive an OTP for authentication.</p>
+                    <h3 className="text-xl font-black text-slate-800">{t('communication_dashboard.register_new_patient_tab', 'Register New Patient')}</h3>
+                    <p className="text-slate-500 text-sm">{t('communication_dashboard.register_patient_desc', 'Register a patient without a smartphone. They will receive an OTP for authentication.')}</p>
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-slate-400">Full Name</label>
+                    <label className="text-xs font-bold uppercase text-slate-400">{t('counter_dashboard.full_name', 'Full Name')}</label>
                     <input 
-                      type="text" required placeholder="Patient Name"
+                      type="text" required placeholder={t('counter_dashboard.full_name', 'Patient Name')}
                       className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50"
                       value={registerData.fullName} onChange={e => setRegisterData({...registerData, fullName: e.target.value})}
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-slate-400">NIC Number</label>
+                    <label className="text-xs font-bold uppercase text-slate-400">{t('counter_dashboard.nic_number', 'NIC Number')}</label>
                     <input 
                       type="text" required placeholder="NIC"
                       className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50"
@@ -330,31 +332,31 @@ function CommunicationDashboard({ user }) {
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-slate-400">Phone Number (For OTP)</label>
+                    <label className="text-xs font-bold uppercase text-slate-400">{t('communication_dashboard.phone_number_otp', 'Phone Number (For OTP)')}</label>
                     <input 
-                      type="text" required placeholder="Mobile Number"
+                      type="text" required placeholder={t('communication_dashboard.mobile_number_placeholder', 'Mobile Number')}
                       className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50"
                       value={registerData.phoneNumber} onChange={e => setRegisterData({...registerData, phoneNumber: e.target.value})}
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-slate-400">Age</label>
+                    <label className="text-xs font-bold uppercase text-slate-400">{t('counter_dashboard.age', 'Age')}</label>
                     <input 
-                      type="number" required placeholder="Age"
+                      type="number" required placeholder={t('communication_dashboard.age_placeholder', 'Age')}
                       className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50"
                       value={registerData.age} onChange={e => setRegisterData({...registerData, age: e.target.value})}
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-slate-400">Gender</label>
+                    <label className="text-xs font-bold uppercase text-slate-400">{t('counter_dashboard.gender', 'Gender')}</label>
                     <select 
                       className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50"
                       value={registerData.gender} onChange={e => setRegisterData({...registerData, gender: e.target.value})}
                     >
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
+                      <option value="Male">{t('counter_dashboard.male', 'Male')}</option>
+                      <option value="Female">{t('counter_dashboard.female', 'Female')}</option>
                     </select>
                   </div>
                   
@@ -363,7 +365,7 @@ function CommunicationDashboard({ user }) {
                       type="submit" disabled={loading}
                       className="w-full py-4 bg-teal-600 text-white font-black rounded-xl shadow-lg hover:bg-teal-700 transition"
                     >
-                      {loading ? 'Registering...' : 'Register Patient'}
+                      {loading ? t('communication_dashboard.registering', 'Registering...') : t('communication_dashboard.register_patient', 'Register Patient')}
                     </button>
                   </div>
                 </form>

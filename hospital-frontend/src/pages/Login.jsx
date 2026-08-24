@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { loginUser } from '../services/api'; // ◄ අපි හදපු API සර්විස් එක ගත්තා
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 function Login({ onLoginSuccess, onSwitchToRegister, onSwitchToPublic }) {
+    const { t } = useTranslation();
     const [nicNumber, setNicNumber] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -23,7 +26,7 @@ function Login({ onLoginSuccess, onSwitchToRegister, onSwitchToPublic }) {
 
         } catch (err) {
             // 🎯 දැන් බ්‍රවුසර් ඇලර්ට් වෙනුවට UI එකේම ලස්සනට එරර් එක වදිනවා!
-            setError(typeof err === 'string' ? err : 'Invalid NIC or Password!');
+            setError(typeof err === 'string' ? err : t('login.invalid_nic_pass'));
         } finally {
             setLoading(false);
         }
@@ -31,7 +34,8 @@ function Login({ onLoginSuccess, onSwitchToRegister, onSwitchToPublic }) {
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-slate-50">
-            <div className="w-full max-w-md p-8 bg-white border shadow-xl rounded-2xl border-slate-100">
+            <div className="relative w-full max-w-md p-8 bg-white border shadow-xl rounded-2xl border-slate-100">
+                <LanguageSwitcher className="absolute top-6 right-6" />
 
                 {/* Header */}
                 <div className="mb-8 text-center">
@@ -40,8 +44,8 @@ function Login({ onLoginSuccess, onSwitchToRegister, onSwitchToPublic }) {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
                     </div>
-                    <h2 className="text-3xl font-bold text-slate-800">Welcome Back</h2>
-                    <p className="mt-1 font-medium text-slate-500">Hospital Queue Management System</p>
+                    <h2 className="text-3xl font-bold text-slate-800">{t('login.welcome_back')}</h2>
+                    <p className="mt-1 font-medium text-slate-500">{t('login.hospital_system')}</p>
                 </div>
 
                 {/* ⚠️ Error Alert (එරර් එකක් ආවොත් විතරක් රතු පාටින් පේනවා) */}
@@ -54,10 +58,10 @@ function Login({ onLoginSuccess, onSwitchToRegister, onSwitchToPublic }) {
                 {/* Login Form */}
                 <form onSubmit={handleLogin} className="space-y-5">
                     <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">NIC Number</label>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('login.nic_number')}</label>
                         <input
                             type="text"
-                            placeholder="e.g., 199912345678"
+                            placeholder={t('login.nic_placeholder')}
                             value={nicNumber}
                             onChange={(e) => setNicNumber(e.target.value)}
                             className="w-full px-4 py-3 transition border rounded-xl border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
@@ -66,11 +70,11 @@ function Login({ onLoginSuccess, onSwitchToRegister, onSwitchToPublic }) {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Password</label>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('login.password')}</label>
                         <div className="relative">
                             <input
                                 type={showPassword ? "text" : "password"}
-                                placeholder="••••••••"
+                                placeholder={t('login.password_placeholder')}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="w-full px-4 py-3 transition border rounded-xl border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
@@ -100,19 +104,19 @@ function Login({ onLoginSuccess, onSwitchToRegister, onSwitchToPublic }) {
                         disabled={loading}
                         className="w-full py-3 px-4 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-bold rounded-xl shadow-lg shadow-teal-600/20 transition duration-200 transform active:scale-[0.98]"
                     >
-                        {loading ? 'Verifying...' : 'Sign In'}
+                        {loading ? t('login.verifying') : t('login.sign_in')}
                     </button>
                 </form>
 
                 <div className="mt-6 text-center">
                     <p className="text-sm font-medium text-slate-500">
-                        New Patient?{' '}
+                        {t('login.new_patient')}{' '}
                         <button
                             type="button"
-                            onClick={onSwitchToRegister} // ◄ මේක දැම්මාම රෙජිස්ටර් පේජ් එකට පනිනවා මචන්!
+                            onClick={onSwitchToRegister} // ◄ මේක දැම්මාම රෙජිස්ටර් පේජ් එකට පනිනවා!
                             className="font-bold text-teal-600 underline transition hover:text-teal-700"
                         >
-                            Register Here
+                            {t('login.register_here')}
                         </button>
                     </p>
                     <div className="mt-4 pt-4 border-t border-slate-100">
@@ -125,7 +129,7 @@ function Login({ onLoginSuccess, onSwitchToRegister, onSwitchToPublic }) {
                                 <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                                 <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                             </svg>
-                            View Live Queue Status
+                            {t('login.view_live_queue')}
                         </button>
                     </div>
                 </div>

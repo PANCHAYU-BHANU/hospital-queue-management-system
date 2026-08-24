@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
+import { useTranslation } from 'react-i18next';
 
 function PatientDashboard({ user }) {
+  const { t } = useTranslation();
   const [isPriorityChecked, setIsPriorityChecked] = useState(false);
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -195,8 +197,8 @@ function PatientDashboard({ user }) {
     if (ticket) {
       if (ticket.status === 'CALLED' && previousStatus.current !== 'CALLED') {
         Swal.fire({
-          title: 'ඔබගේ වාරය පැමිණ ඇත! 🔔',
-          text: 'කරුණාකර වෛද්‍යවරයාගේ කාමරයට යන්න (Please proceed to the doctor\'s room)',
+          title: '🔔',
+          text: t('patient_dashboard.status_called', "Please proceed to the doctor's room! 🔔"),
           icon: 'info',
           confirmButtonText: 'OK',
           confirmButtonColor: '#0d9488'
@@ -205,8 +207,8 @@ function PatientDashboard({ user }) {
       
       if (ticket.status === 'PHARMACY_QUEUE' && previousStatus.current !== 'PHARMACY_QUEUE') {
         Swal.fire({
-          title: 'බෙහෙත් වට්ටෝරුව සූදානම්! 💊',
-          text: 'කරුණාකර රෝහලේ ෆාමසිය වෙත ගොස් ඔබගේ බෙහෙත් ලබාගන්න. (Please proceed to the Pharmacy)',
+          title: '💊',
+          text: t('patient_dashboard.status_pharmacy', "Please proceed to the Pharmacy 💊"),
           icon: 'success',
           confirmButtonText: 'OK',
           confirmButtonColor: '#0d9488'
@@ -215,8 +217,8 @@ function PatientDashboard({ user }) {
       
       if (ticket.status === 'PENDING_PAYMENT' && previousStatus.current !== 'PENDING_PAYMENT') {
         Swal.fire({
-          title: 'බෙහෙත් නිකුත් කර ඇත! 🎁',
-          text: 'ඔබගේ බෙහෙත් පාර්සලය සූදානම්. කරුණාකර ෆාමසියෙන් ලබාගන්න.',
+          title: '🎁',
+          text: t('patient_dashboard.status_pending_payment', "Medicines Ready (Pending Payment) 💵"),
           icon: 'success',
           confirmButtonText: 'OK',
           confirmButtonColor: '#0d9488'
@@ -243,12 +245,12 @@ function PatientDashboard({ user }) {
     setError(null);
 
     if (!user || !user.id) {
-      setError("යූසර්ගේ ID එක ලැබිලා නෑ මචන්! කරුණාකර නැවත ලොග් වෙන්න.");
+      setError(t('patient_dashboard.error_no_user_id', "User ID not found! Please log in again."));
       return;
     }
 
     if (!selectedDoctorId) {
-      setError("කරුණාකර කාමරයක්/වෛද්‍යවරයෙක් තෝරන්න!");
+      setError(t('patient_dashboard.error_select_doctor', "Please select a room/doctor!"));
       return;
     }
 
@@ -272,14 +274,14 @@ function PatientDashboard({ user }) {
       if (response.ok) {
         const activeTicket = await response.json();
         setTicket(activeTicket);
-        toast.success("ටෝකන් එක සාර්ථකව ගත්තා මචන්! 🎟️✅");
+        toast.success(t('patient_dashboard.token_success', "Token generated successfully! 🎟️✅"));
       } else {
         const errText = await response.text();
-        setError(errText || "ටෝකන් එක ගන්න බැරි වුණා. සමහරවිට ඔයා දැනටමත් පෝලිමක ඇති!");
-        toast.error("ටෝකන් එක ගන්න බැරි වුණා.");
+        setError(t('patient_dashboard.error_token_failed', "Failed to generate token. You might already be in a queue!"));
+        toast.error(t('patient_dashboard.error_token_failed', "Failed to generate token. You might already be in a queue!"));
       }
     } catch (err) {
-      setError("Server එකට සම්බන්ධ වෙන්න බැහැ මචන්! Backend එක Run වෙනවද බලන්න.");
+      setError(t('patient_dashboard.error_server', "Cannot connect to the server! Please check if backend is running."));
       console.error("Token generation failed:", err);
     } finally {
       setLoading(false);
@@ -290,14 +292,14 @@ function PatientDashboard({ user }) {
     if (!ticket) return;
 
     Swal.fire({
-      title: 'Leave Queue?',
-      text: "Are you sure you want to leave the queue?",
+      title: t('patient_dashboard.leave_queue_title', 'Leave Queue?'),
+      text: t('patient_dashboard.leave_queue_desc', 'Are you sure you want to leave the queue?'),
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#ef4444',
       cancelButtonColor: '#94a3b8',
-      confirmButtonText: 'Yes, leave it!',
-      cancelButtonText: 'Cancel'
+      confirmButtonText: t('patient_dashboard.yes_leave', 'Yes, leave it!'),
+      cancelButtonText: t('patient_dashboard.cancel', 'Cancel')
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
@@ -323,7 +325,7 @@ function PatientDashboard({ user }) {
       <div className="p-8 space-y-6 bg-white border shadow-sm lg:col-span-6 rounded-3xl border-slate-200 h-fit">
         <div className="flex items-center space-x-3">
           <span className="text-2xl">➕</span>
-          <h3 className="text-2xl font-black text-slate-800">Request New Token</h3>
+          <h3 className="text-2xl font-black text-slate-800">{t('patient_dashboard.request_new_token', 'Request New Token')}</h3>
         </div>
 
         {/* ERROR MESSAGE DISPLAY */}
@@ -336,19 +338,19 @@ function PatientDashboard({ user }) {
         {/* GPS STATUS ALERTS */}
         {gpsStatus === 'checking' && (
           <div className="p-4 text-sm font-bold border text-blue-700 bg-blue-50 rounded-xl border-blue-100 flex items-center gap-2">
-            <span className="animate-spin text-xl">⏳</span> ස්ථානය පරීක්ෂා කරමින් පවතී... (Checking location)
+            <span className="animate-spin text-xl">⏳</span> {t('patient_dashboard.checking_location', 'Checking location...')}
           </div>
         )}
 
         {gpsStatus === 'denied' && (
           <div className="p-4 text-sm font-bold border text-rose-700 bg-rose-50 rounded-xl border-rose-100">
-            🚫 Location (GPS) අක්‍රීයයි! කරුණාකර Browser එකෙන් Location Access ලබා දෙන්න. ටෝකන් ලබා ගැනීමට රෝහලේ සිට 5km ඇතුළත සිටීම අනිවාර්ය වේ.
+            🚫 {t('patient_dashboard.error_gps_denied', 'Location (GPS) is disabled! Please grant location access. You must be within 5km of the hospital to get a token.')}
           </div>
         )}
 
         {gpsStatus === 'too_far' && (
           <div className="p-4 text-sm font-bold border text-rose-700 bg-rose-50 rounded-xl border-rose-100">
-            <p>🏥 ඔබ සිටින්නේ රෝහලක සිට 5km සීමාවෙන් පිටතයි. ඔබට ටෝකන් ලබා ගත හැක්කේ රෝහලට 5km ආසන්නයේ සිටින විට පමණි.</p>
+            <p>🏥 {t('patient_dashboard.error_too_far', 'You are outside the 5km radius of the hospital. You can only get a token when you are near the hospital.')}</p>
             {nearestHospital && userLocation && (
               <div className="mt-2 text-xs opacity-75 font-mono">
                 <p>ඔබගේ GPS ස්ථානය: {userLocation.lat.toFixed(4)}, {userLocation.lon.toFixed(4)}</p>
@@ -376,26 +378,26 @@ function PatientDashboard({ user }) {
 
         {gpsStatus === 'granted' && nearestHospital && (
           <div className="p-4 text-sm font-bold border text-teal-700 bg-teal-50 rounded-xl border-teal-100">
-            📍 Nearest Hospital: {nearestHospital.name} ({nearestHospital.district}) - You are within 5km!
+            📍 {t('patient_dashboard.nearest_hospital_found', 'Nearest Hospital: {{name}} ({{district}}) - You are within 5km!', { name: nearestHospital.name, district: nearestHospital.district })}
           </div>
         )}
 
         {gpsStatus === 'low_accuracy' && (
           <div className="p-4 text-sm font-bold border text-amber-700 bg-amber-50 rounded-xl border-amber-100">
-            ⚠️ ඔබගේ උපාංගයෙන් නිවැරදි GPS පිහිටීම ලබාගත නොහැක. (පරිගණකයක් භාවිතා කිරීම හෝ දුර්වල Signal නිසා). කරුණාකර රෝහල පහතින් තෝරන්න.
+            ⚠️ {t('patient_dashboard.error_low_accuracy', 'Your device cannot provide an accurate GPS location. Please select the hospital manually below.')}
           </div>
         )}
 
         {/* MANUAL HOSPITAL SELECTION (For Desktop, Low Accuracy, or No GPS) */}
         {(gpsStatus === 'unsupported' || gpsStatus === 'low_accuracy') && (
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-slate-400">Select Hospital (Manual)</label>
+            <label className="text-xs font-bold uppercase text-slate-400">{t('patient_dashboard.select_hospital_manual', 'Select Hospital (Manual)')}</label>
             <select 
               className="w-full px-4 py-3 font-bold border outline-none rounded-xl border-slate-200 bg-slate-50 text-slate-700 focus:ring-2 focus:ring-teal-500"
               value={selectedHospitalId}
               onChange={handleManualHospitalChange}
             >
-              <option value="">-- Select a Hospital --</option>
+              <option value="">{t('patient_dashboard.select_hospital_placeholder', '-- Select a Hospital --')}</option>
               {allHospitals.map(h => (
                 <option key={h.id} value={h.id}>{h.name} - {h.district}</option>
               ))}
@@ -405,7 +407,7 @@ function PatientDashboard({ user }) {
 
         {/* DEPARTMENT / DOCTOR SELECT */}
         <div className="space-y-2">
-          <label className="text-xs font-bold uppercase text-slate-400">Select Department & Doctor</label>
+          <label className="text-xs font-bold uppercase text-slate-400">{t('patient_dashboard.select_dept_doctor', 'Select Department & Doctor')}</label>
           <select 
             className="w-full px-4 py-3 font-bold border outline-none rounded-xl border-slate-200 bg-slate-50 text-slate-700 focus:ring-2 focus:ring-teal-500 disabled:opacity-50"
             value={selectedDoctorId}
@@ -413,7 +415,7 @@ function PatientDashboard({ user }) {
             disabled={gpsStatus === 'denied' || gpsStatus === 'too_far' || gpsStatus === 'checking' || doctors.length === 0}
           >
             {doctors.length === 0 ? (
-              <option value="">No doctors/rooms available</option>
+              <option value="">{t('patient_dashboard.no_doctors_available', 'No doctors/rooms available')}</option>
             ) : (
               doctors.map(doc => (
                 <option key={doc.id} value={doc.id}>
@@ -436,8 +438,8 @@ function PatientDashboard({ user }) {
               disabled={gpsStatus === 'denied' || gpsStatus === 'too_far' || gpsStatus === 'checking' || (patientProfile && patientProfile.age >= 60)}
             />
             <label htmlFor="priority" className="text-xs font-medium leading-relaxed select-none text-slate-600">
-              <strong className="text-amber-700 block font-bold mb-0.5">Priority Booking (විශේෂ ප්‍රමුඛතාවය)</strong>
-              ඔබ ගර්භණී මවක්, ආබාධිත හෝ වයස අවුරුදු 60ට වැඩි ජ්‍යෙෂ්ඨ පුරවැසියෙක් නම් පමණක් මෙය සක්‍රීය කරන්න.
+              <strong className="text-amber-700 block font-bold mb-0.5">{t('patient_dashboard.priority_booking', 'Priority Booking')}</strong>
+              {t('patient_dashboard.priority_desc', 'Enable this only if you are pregnant, disabled, or a senior citizen over 60 years.')}
             </label>
           </div>
           
@@ -473,7 +475,7 @@ function PatientDashboard({ user }) {
           disabled={loading || gpsStatus === 'denied' || gpsStatus === 'too_far' || gpsStatus === 'checking' || !selectedDoctorId}
           className="flex items-center justify-center w-full py-4 space-x-2 font-black text-white transition duration-200 bg-teal-600 shadow-lg hover:bg-teal-700 rounded-xl shadow-teal-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <span>{loading ? "Processing..." : "Get Live Token 🚀"}</span>
+          <span>{loading ? t('patient_dashboard.processing', 'Processing...') : t('patient_dashboard.get_live_token', 'Get Live Token 🚀')}</span>
         </button>
       </div>
 
@@ -484,17 +486,17 @@ function PatientDashboard({ user }) {
           <div className="max-w-sm space-y-4 text-center">
             <span className="text-4xl">🎫</span>
             <p className="text-sm font-bold leading-relaxed text-slate-400">
-              ඔබ තවමත් කිසිදු සායනයක් සඳහා ටෝකන් පතක් ලබාගෙන නැත මචන්.
+              {t('patient_dashboard.no_active_token', "You haven't requested any tokens yet.")}
             </p>
           </div>
         ) : (
           <div className="w-full space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <h4 className="text-lg font-black text-slate-800">🎟️ Your Active Ticket</h4>
+              <h4 className="text-lg font-black text-slate-800">🎟️ {t('patient_dashboard.active_ticket', 'Your Active Ticket')}</h4>
               <span className={`px-3 py-1 rounded-full text-[10px] font-black ${
                 ticket.queueType === 'PRIORITY' ? 'bg-rose-100 text-rose-700' : 'bg-teal-100 text-teal-700'
               }`}>
-                {ticket.queueType === 'PRIORITY' ? 'PRIORITY' : 'REGULAR'}
+                {ticket.queueType === 'PRIORITY' ? t('patient_dashboard.priority', 'PRIORITY') : t('patient_dashboard.regular', 'REGULAR')}
               </span>
             </div>
 
@@ -504,29 +506,29 @@ function PatientDashboard({ user }) {
               <p className={`text-xs font-bold tracking-wider uppercase ${
                 ticket.queueType === 'PRIORITY' ? 'text-rose-100' : 'text-teal-100'
               }`}>
-                {ticket.status === 'PENDING_APPROVAL' && 'Sent to Counter (Pending Approval) ⏳'}
-                {ticket.status === 'PENDING' && 'Added to Queue ✅'}
-                {ticket.status === 'CALLED' && 'Please proceed to the doctor\'s room! 🔔'}
-                {ticket.status === 'IN_CONSULTATION' && 'In Consultation 👨‍⚕️'}
-                {ticket.status === 'PHARMACY_QUEUE' && 'Please proceed to the Pharmacy 💊'}
-                {ticket.status === 'PENDING_PAYMENT' && 'Medicines Ready (Pending Payment) 💵'}
-                {ticket.status === 'COMPLETED' && 'Consultation Completed 🎉'}
+                {ticket.status === 'PENDING_APPROVAL' && t('patient_dashboard.status_pending_approval', 'Sent to Counter (Pending Approval) ⏳')}
+                {ticket.status === 'PENDING' && t('patient_dashboard.status_pending', 'Added to Queue ✅')}
+                {ticket.status === 'CALLED' && t('patient_dashboard.status_called', 'Please proceed to the doctor\'s room! 🔔')}
+                {ticket.status === 'IN_CONSULTATION' && t('patient_dashboard.status_in_consultation', 'In Consultation 👨‍⚕️')}
+                {ticket.status === 'PHARMACY_QUEUE' && t('patient_dashboard.status_pharmacy', 'Please proceed to the Pharmacy 💊')}
+                {ticket.status === 'PENDING_PAYMENT' && t('patient_dashboard.status_pending_payment', 'Medicines Ready (Pending Payment) 💵')}
+                {ticket.status === 'COMPLETED' && t('patient_dashboard.status_completed', 'Consultation Completed 🎉')}
               </p>
               <h1 className="text-6xl font-black tracking-tight">{ticket.tokenNumber || 'T-00'}</h1>
               <p className={`pt-2 text-sm font-medium ${
                 ticket.queueType === 'PRIORITY' ? 'text-rose-50/80' : 'text-teal-50/80'
               }`}>
-                🏥 Room: <span className="font-bold">{ticket.roomNumber || 'OPD'}</span>
+                🏥 {t('patient_dashboard.room', 'Room')}: <span className="font-bold">{ticket.roomNumber || t('patient_dashboard.opd', 'OPD')}</span>
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 text-center">
               <div className="p-4 border bg-slate-50 rounded-xl border-slate-100">
-                <span className="block mb-1 text-xs font-bold text-slate-400">Current Queue No</span>
+                <span className="block mb-1 text-xs font-bold text-slate-400">{t('patient_dashboard.current_queue_no', 'Current Queue No')}</span>
                 <span className="text-xl font-black text-slate-700">{ticket.currentNumber || '0'}</span>
               </div>
               <div className="p-4 border bg-slate-50 rounded-xl border-slate-100">
-                <span className="block mb-1 text-xs font-bold text-slate-400">Estimated Wait</span>
+                <span className="block mb-1 text-xs font-bold text-slate-400">{t('patient_dashboard.estimated_wait', 'Estimated Wait')}</span>
                 <span className="text-xl font-black text-teal-600">{waitTime}</span>
               </div>
             </div>
@@ -535,7 +537,7 @@ function PatientDashboard({ user }) {
               onClick={handleLeaveQueue}
               className="w-full mt-4 py-3 font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition"
             >
-              Leave Queue
+              {t('patient_dashboard.leave_queue', 'Leave Queue')}
             </button>
           </div>
         )}

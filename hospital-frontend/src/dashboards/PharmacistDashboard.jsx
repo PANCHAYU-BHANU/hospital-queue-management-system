@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
+import { useTranslation } from 'react-i18next';
 
 function PharmacistDashboard({ user, activeTab: propTab }) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(propTab === 'Medicine Inventory' ? 'INVENTORY' : 'QUEUE'); // 'INVENTORY' or 'QUEUE'
   
   useEffect(() => {
@@ -109,16 +111,16 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
       });
 
       if (res.ok) {
-        Swal.fire('Success', 'Medicine added successfully!', 'success');
+        Swal.fire(t('pharmacist_dashboard.swal_success', 'Success'), t('pharmacist_dashboard.swal_medicine_added', 'Medicine added successfully!'), 'success');
         setShowAddForm(false);
         setFormData({ name: '', quantity: '', unit: 'pills' });
         fetchMedicines(hospitalId);
       } else {
         const errText = await res.text();
-        Swal.fire('Error', errText || 'Failed to add medicine.', 'error');
+        Swal.fire(t('pharmacist_dashboard.swal_error', 'Error'), errText || t('pharmacist_dashboard.swal_medicine_add_failed', 'Failed to add medicine.'), 'error');
       }
     } catch (err) {
-      Swal.fire('Error', 'Server error.', 'error');
+      Swal.fire(t('pharmacist_dashboard.swal_error', 'Error'), t('pharmacist_dashboard.swal_server_error', 'Server error.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -126,14 +128,14 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
 
   const handleUpdateStock = async (medicineId, currentQuantity) => {
     const { value: quantityToAdd } = await Swal.fire({
-      title: 'Update Stock',
+      title: t('pharmacist_dashboard.swal_update_stock_title', 'Update Stock'),
       input: 'number',
-      inputLabel: 'Enter quantity to ADD (use negative to remove)',
-      inputPlaceholder: 'e.g. 100',
+      inputLabel: t('pharmacist_dashboard.swal_update_stock_label', 'Enter quantity to ADD (use negative to remove)'),
+      inputPlaceholder: t('pharmacist_dashboard.swal_update_stock_placeholder', 'e.g. 100'),
       showCancelButton: true,
       inputValidator: (value) => {
         if (!value || isNaN(value)) {
-          return 'Please enter a valid number!';
+          return t('pharmacist_dashboard.swal_invalid_number', 'Please enter a valid number!');
         }
       }
     });
@@ -141,7 +143,7 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
     if (quantityToAdd) {
       const qty = parseInt(quantityToAdd);
       if (currentQuantity + qty < 0) {
-        Swal.fire('Error', 'Stock cannot be negative!', 'error');
+        Swal.fire(t('pharmacist_dashboard.swal_error', 'Error'), t('pharmacist_dashboard.swal_negative_stock', 'Stock cannot be negative!'), 'error');
         return;
       }
 
@@ -153,13 +155,13 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
         });
 
         if (res.ok) {
-          Swal.fire('Success', 'Stock updated!', 'success');
+          Swal.fire(t('pharmacist_dashboard.swal_success', 'Success'), t('pharmacist_dashboard.swal_stock_updated', 'Stock updated!'), 'success');
           fetchMedicines(hospitalId);
         } else {
-          Swal.fire('Error', 'Failed to update stock.', 'error');
+          Swal.fire(t('pharmacist_dashboard.swal_error', 'Error'), t('pharmacist_dashboard.swal_stock_update_failed', 'Failed to update stock.'), 'error');
         }
       } catch (err) {
-        Swal.fire('Error', 'Server error.', 'error');
+        Swal.fire(t('pharmacist_dashboard.swal_error', 'Error'), t('pharmacist_dashboard.swal_server_error', 'Server error.'), 'error');
       }
     }
   };
@@ -172,18 +174,18 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
       });
       if (res.ok) {
         Swal.fire({
-          title: 'Success',
-          text: 'Medicines dispensed successfully!',
+          title: t('pharmacist_dashboard.swal_success', 'Success'),
+          text: t('pharmacist_dashboard.swal_dispensed', 'Medicines dispensed successfully!'),
           icon: 'success',
           timer: 2000,
           showConfirmButton: false
         });
         fetchPharmacyQueue();
       } else {
-        Swal.fire('Error', 'Failed to complete process.', 'error');
+        Swal.fire(t('pharmacist_dashboard.swal_error', 'Error'), t('pharmacist_dashboard.swal_complete_failed', 'Failed to complete process.'), 'error');
       }
     } catch (err) {
-      Swal.fire('Error', 'Server error.', 'error');
+      Swal.fire(t('pharmacist_dashboard.swal_error', 'Error'), t('pharmacist_dashboard.swal_server_error', 'Server error.'), 'error');
     } finally {
       setLoading(false);
     }
@@ -208,9 +210,9 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
       {/* 🏢 Welcome Banner */}
       <div className="p-6 text-white bg-slate-800 shadow-sm rounded-2xl flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-black">Welcome, {user?.fullName || 'Pharmacist'}!</h1>
+          <h1 className="text-2xl font-black">{t('pharmacist_dashboard.welcome', 'Welcome,')} {user?.fullName || t('pharmacist_dashboard.pharmacist_default_name', 'Pharmacist')}!</h1>
           <p className="mt-1 text-sm font-medium text-slate-300">
-            Hospital Pharmacy Operations
+            {t('pharmacist_dashboard.hospital_pharmacy_ops', 'Hospital Pharmacy Operations')}
           </p>
         </div>
         
@@ -220,13 +222,13 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
             onClick={() => setActiveTab('QUEUE')}
             className={`px-6 py-2.5 rounded-lg text-sm font-bold transition ${activeTab === 'QUEUE' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-700'}`}
           >
-            📋 Pharmacy Queue
+            {t('pharmacist_dashboard.tab_pharmacy_queue', '📋 Pharmacy Queue')}
           </button>
           <button 
             onClick={() => setActiveTab('INVENTORY')}
             className={`px-6 py-2.5 rounded-lg text-sm font-bold transition ${activeTab === 'INVENTORY' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-700'}`}
           >
-            💊 Medicine Inventory
+            {t('pharmacist_dashboard.tab_medicine_inventory', '💊 Medicine Inventory')}
           </button>
         </div>
       </div>
@@ -235,17 +237,17 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
         <div className="space-y-6">
           <div>
             <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
-              <span className="text-3xl">📋</span> Pharmacy Queue
+              <span className="text-3xl">📋</span> {t('pharmacist_dashboard.tab_pharmacy_queue', 'Pharmacy Queue').replace('📋 ', '')}
             </h2>
-            <p className="text-slate-500 mt-1">Patients waiting to collect their medicines.</p>
+            <p className="text-slate-500 mt-1">{t('pharmacist_dashboard.patients_waiting', 'Patients waiting to collect their medicines.')}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {pharmacyQueue.length === 0 ? (
               <div className="col-span-full py-16 text-center bg-white rounded-3xl border border-dashed border-slate-300">
                  <span className="text-4xl">☕</span>
-                 <h3 className="text-lg font-bold text-slate-600 mt-4">Queue is Empty</h3>
-                 <p className="text-sm text-slate-400">No patients are waiting at the pharmacy.</p>
+                 <h3 className="text-lg font-bold text-slate-600 mt-4">{t('pharmacist_dashboard.queue_is_empty', 'Queue is Empty')}</h3>
+                 <p className="text-sm text-slate-400">{t('pharmacist_dashboard.no_patients_waiting', 'No patients are waiting at the pharmacy.')}</p>
               </div>
             ) : (
               pharmacyQueue.map(patient => {
@@ -260,13 +262,13 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
                           </div>
                           <div>
                             <h3 className="font-black text-lg text-slate-800">{patient.patientName}</h3>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Dr. {patient.doctorName}</p>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">{t('pharmacist_dashboard.dr', 'Dr.')} {patient.doctorName}</p>
                           </div>
                         </div>
                       </div>
 
                       <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
-                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-wider mb-3">Prescribed Medicines</h4>
+                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-wider mb-3">{t('pharmacist_dashboard.prescribed_medicines', 'Prescribed Medicines')}</h4>
                         {prescribedMeds.length > 0 ? (
                           <ul className="space-y-3">
                             {prescribedMeds.map((med, idx) => {
@@ -278,15 +280,15 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
                                 <li key={idx} className="flex justify-between items-center text-sm border-b border-slate-200 pb-2 last:border-0 last:pb-0">
                                   <span className="font-bold text-slate-700">{med.name}</span>
                                   <div className="text-right">
-                                    <span className="block text-xs text-slate-500">{med.frequency} <strong className="text-teal-600">({med.mealTiming || 'After Meal'})</strong> x {med.days} Days</span>
-                                    <span className="inline-block px-2 py-0.5 bg-teal-100 text-teal-800 text-[10px] font-black rounded mt-1">QTY: {med.totalQuantity}</span>
+                                    <span className="block text-xs text-slate-500">{med.frequency} <strong className="text-teal-600">({med.mealTiming || t('pharmacist_dashboard.after_meal', 'After Meal')})</strong> x {med.days} {t('pharmacist_dashboard.days', 'Days')}</span>
+                                    <span className="inline-block px-2 py-0.5 bg-teal-100 text-teal-800 text-[10px] font-black rounded mt-1">{t('pharmacist_dashboard.qty', 'QTY:')} {med.totalQuantity}</span>
                                   </div>
                                 </li>
                               )
                             })}
                           </ul>
                         ) : (
-                          <p className="text-sm text-slate-400 font-medium">No pharmacy medicines prescribed.</p>
+                          <p className="text-sm text-slate-400 font-medium">{t('pharmacist_dashboard.no_pharmacy_meds', 'No pharmacy medicines prescribed.')}</p>
                         )}
                       </div>
                     </div>
@@ -296,7 +298,7 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
                         disabled
                         className="w-full py-3 bg-amber-100 text-amber-700 font-black rounded-xl cursor-not-allowed border border-amber-200"
                       >
-                        ⏳ Waiting for Patient to Accept...
+                        {t('pharmacist_dashboard.waiting_for_patient', '⏳ Waiting for Patient to Accept...')}
                       </button>
                     ) : (
                       <button
@@ -304,7 +306,7 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
                         disabled={loading}
                         className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-black rounded-xl transition shadow-md shadow-teal-600/20 active:scale-95 disabled:opacity-50"
                       >
-                        {loading ? 'Processing...' : 'Pack & Complete 🚀'}
+                        {loading ? t('pharmacist_dashboard.processing', 'Processing...') : t('pharmacist_dashboard.pack_and_complete', 'Pack & Complete 🚀')}
                       </button>
                     )}
                   </div>
@@ -320,9 +322,9 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
           <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <div>
               <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
-                <span className="text-3xl">💊</span> Medicine Inventory
+                <span className="text-3xl">💊</span> {t('pharmacist_dashboard.tab_medicine_inventory', 'Medicine Inventory').replace('💊 ', '')}
               </h2>
-              <p className="text-slate-500 mt-1">Manage medicines and track available stock.</p>
+              <p className="text-slate-500 mt-1">{t('pharmacist_dashboard.manage_medicines', 'Manage medicines and track available stock.')}</p>
             </div>
             <button
               onClick={() => setShowAddForm(!showAddForm)}
@@ -330,7 +332,7 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
                 showAddForm ? 'bg-rose-100 text-rose-600 hover:bg-rose-200' : 'bg-slate-800 text-white hover:bg-slate-900 shadow-slate-800/20'
               }`}
             >
-              {showAddForm ? 'Cancel' : '+ Add New Medicine'}
+              {showAddForm ? t('pharmacist_dashboard.cancel', 'Cancel') : t('pharmacist_dashboard.add_new_medicine', '+ Add New Medicine')}
             </button>
           </div>
 
@@ -338,49 +340,49 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
             <form onSubmit={handleAddMedicine} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
-                  <label className="block text-sm font-bold text-slate-600 mb-1">Medicine Name</label>
+                  <label className="block text-sm font-bold text-slate-600 mb-1">{t('pharmacist_dashboard.medicine_name', 'Medicine Name')}</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Paracetamol 500mg"
+                    placeholder={t('pharmacist_dashboard.medicine_name_placeholder', 'e.g. Paracetamol 500mg')}
                     value={formData.name}
                     onChange={e => setFormData({...formData, name: e.target.value})}
                     className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-600 mb-1">Initial Quantity</label>
+                  <label className="block text-sm font-bold text-slate-600 mb-1">{t('pharmacist_dashboard.initial_quantity', 'Initial Quantity')}</label>
                   <input
                     type="number"
                     required
                     min="0"
-                    placeholder="e.g. 1000"
+                    placeholder={t('pharmacist_dashboard.initial_quantity_placeholder', 'e.g. 1000')}
                     value={formData.quantity}
                     onChange={e => setFormData({...formData, quantity: e.target.value})}
                     className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-600 mb-1">Unit</label>
+                  <label className="block text-sm font-bold text-slate-600 mb-1">{t('pharmacist_dashboard.unit', 'Unit')}</label>
                   <select
                     value={formData.unit}
                     onChange={e => setFormData({...formData, unit: e.target.value})}
                     className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
                   >
-                    <option value="pills">Pills / Tablets</option>
-                    <option value="bottles">Bottles</option>
-                    <option value="tubes">Tubes</option>
-                    <option value="vials">Vials</option>
+                    <option value="pills">{t('pharmacist_dashboard.unit_pills', 'Pills / Tablets')}</option>
+                    <option value="bottles">{t('pharmacist_dashboard.unit_bottles', 'Bottles')}</option>
+                    <option value="tubes">{t('pharmacist_dashboard.unit_tubes', 'Tubes')}</option>
+                    <option value="vials">{t('pharmacist_dashboard.unit_vials', 'Vials')}</option>
                   </select>
                 </div>
               </div>
               <div className="flex justify-end pt-2">
-                <button
+              <button
                   type="submit"
                   disabled={loading}
                   className="px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl transition shadow-md disabled:bg-slate-400"
                 >
-                  {loading ? 'Adding...' : 'Add Medicine'}
+                  {loading ? t('pharmacist_dashboard.adding', 'Adding...') : t('pharmacist_dashboard.add_medicine', 'Add Medicine')}
                 </button>
               </div>
             </form>
@@ -393,7 +395,7 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
             </span>
             <input
               type="text"
-              placeholder="Search medicines by name..."
+              placeholder={t('pharmacist_dashboard.search_medicines', 'Search medicines by name...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"
@@ -410,11 +412,11 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
                       med.availableQuantity <= 50 ? 'bg-rose-100 text-rose-600' : 
                       med.availableQuantity <= 200 ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'
                     }`}>
-                      {med.availableQuantity <= 50 ? 'Low Stock' : 'In Stock'}
+                      {med.availableQuantity <= 50 ? t('pharmacist_dashboard.low_stock', 'Low Stock') : t('pharmacist_dashboard.in_stock', 'In Stock')}
                     </span>
                   </div>
                   <p className="text-3xl font-black text-slate-700 mt-4 mb-1">
-                    {med.availableQuantity} <span className="text-sm font-bold text-slate-400 uppercase tracking-wide">{med.unit}</span>
+                    {med.availableQuantity} <span className="text-sm font-bold text-slate-400 uppercase tracking-wide">{t(`pharmacist_dashboard.unit_${med.unit}`, med.unit)}</span>
                   </p>
                 </div>
                 
@@ -423,14 +425,14 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
                     onClick={() => handleUpdateStock(med.id, med.availableQuantity)}
                     className="w-full py-2.5 bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-teal-700 font-bold rounded-xl transition text-sm"
                   >
-                    Update Stock 🔄
+                    {t('pharmacist_dashboard.update_stock_btn', 'Update Stock 🔄')}
                   </button>
                 </div>
               </div>
             ))}
             {medicines.length === 0 && (
               <div className="col-span-3 py-12 text-center text-slate-400 font-medium bg-white rounded-2xl border border-dashed border-slate-300">
-                No medicines found in the inventory.
+                {t('pharmacist_dashboard.no_medicines_found', 'No medicines found in the inventory.')}
               </div>
             )}
           </div>

@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 function PatientProfile({ user }) {
+  const { t } = useTranslation();
   const [profile, setProfile] = useState({
     fullName: '',
     nicNumber: '',
@@ -135,8 +137,8 @@ function PatientProfile({ user }) {
             <span className="text-4xl">🧑‍💼</span>
           </div>
           <div>
-            <h2 className="text-3xl font-black tracking-tight">My Profile</h2>
-            <p className="text-teal-100 font-medium mt-1">Manage your personal information and contact details</p>
+            <h2 className="text-3xl font-black tracking-tight">{t('patient_profile.my_profile', 'My Profile')}</h2>
+            <p className="text-teal-100 font-medium mt-1">{t('patient_profile.manage_info', 'Manage your personal information and contact details')}</p>
           </div>
         </div>
       </div>
@@ -187,14 +189,14 @@ function PatientProfile({ user }) {
           </div>
 
           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-            <h4 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-4">Security Info</h4>
+            <h4 className="text-sm font-black uppercase tracking-wider text-slate-400 mb-4">{t('patient_profile.security_info', 'Security Info')}</h4>
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <label className="text-xs font-bold uppercase text-slate-500 block mb-1">NIC Number</label>
+              <label className="text-xs font-bold uppercase text-slate-500 block mb-1">{t('patient_profile.nic_number', 'NIC Number')}</label>
               <div className="flex items-center justify-between">
                 <span className="text-lg font-black text-slate-700">{profile.nicNumber || 'Not Provided'}</span>
                 <svg className="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium mt-2 leading-relaxed">Your NIC is verified and cannot be changed for security purposes.</p>
+              <p className="text-[10px] text-slate-400 font-medium mt-2 leading-relaxed">{t('patient_profile.nic_verified', 'Your NIC is verified and cannot be changed for security purposes.')}</p>
             </div>
           </div>
         </div>
@@ -206,11 +208,11 @@ function PatientProfile({ user }) {
             {/* Section 1: Contact Details */}
             <div>
               <h4 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-                <span>📞</span> Contact Information
+                <span>📞</span> {t('patient_profile.contact_info', 'Contact Information')}
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Phone Number</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">{t('patient_profile.phone_number', 'Phone Number')}</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -230,7 +232,7 @@ function PatientProfile({ user }) {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Emergency Contact (Phone Number)</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">{t('patient_profile.emergency_contact', 'Emergency Contact (Phone Number)')}</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       <svg className="h-5 w-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -254,11 +256,11 @@ function PatientProfile({ user }) {
             {/* Section 2: Addresses */}
             <div>
               <h4 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-                <span>📍</span> Location Details
+                <span>📍</span> {t('patient_profile.location_details', 'Location Details')}
               </h4>
               <div className="space-y-5">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Home Address</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">{t('patient_profile.home_address', 'Home Address')}</label>
                   <textarea 
                     name="homeAddress"
                     rows="2"
@@ -270,7 +272,7 @@ function PatientProfile({ user }) {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Alternate Address <span className="text-slate-400 normal-case font-medium">(Optional)</span></label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">{t('patient_profile.alternate_address', 'Alternate Address')}</label>
                   <textarea 
                     name="alternateAddress"
                     rows="2"
@@ -286,11 +288,11 @@ function PatientProfile({ user }) {
             {/* Section 3: Medical Info */}
             <div>
               <h4 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-                <span>🩸</span> Medical Info
+                <span>🩸</span> {t('patient_profile.medical_info', 'Medical Info')}
               </h4>
               <div className="w-full md:w-1/2 pr-0 md:pr-2.5">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Blood Group</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">{t('patient_profile.blood_group', 'Blood Group')}</label>
                   <div className="relative">
                     <select 
                       name="bloodGroup"
@@ -336,11 +338,11 @@ function PatientProfile({ user }) {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>Saving Changes...</span>
+                  <span>{t('patient_profile.saving_changes', 'Saving Changes...')}</span>
                 </>
               ) : (
                 <>
-                  <span>Save Changes</span>
+                  <span>{t('patient_profile.save_changes', 'Save Changes')}</span>
                   <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
                 </>
               )}

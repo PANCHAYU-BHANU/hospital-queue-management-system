@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
+import { useTranslation } from 'react-i18next';
 
 function AdminDashboard({ user, activeTab }) {
+  const { t } = useTranslation();
   const [doctors, setDoctors] = useState([]);
   const [counters, setCounters] = useState([]);
   const [rooms, setRooms] = useState([]);
@@ -122,7 +124,7 @@ function AdminDashboard({ user, activeTab }) {
         });
 
         if (response.ok) {
-          Swal.fire('Success', 'කවුන්ටරය සාර්ථකව රෙජිස්ටර් කළා මචන්! ✅', 'success');
+          Swal.fire(t('admin_dashboard.swal_success', 'Success'), t('admin_dashboard.swal_counter_registered', 'Counter registered successfully! ✅'), 'success');
           setCounterFormData({ fullName: '', counterNumber: 'Counter 01', nicNumber: '', phoneNumber: '', password: '' });
           fetchCounters();
         } else {
@@ -137,7 +139,7 @@ function AdminDashboard({ user, activeTab }) {
         });
 
         if (response.ok) {
-          Swal.fire('Success', 'Communication Center සාර්ථකව රෙජිස්ටර් කළා මචන්! ✅', 'success');
+          Swal.fire(t('admin_dashboard.swal_success', 'Success'), t('admin_dashboard.swal_center_registered', 'Communication Center registered successfully! ✅'), 'success');
           setCounterFormData({ fullName: '', counterNumber: 'Center 01', nicNumber: '', phoneNumber: '', password: '' });
           fetchCenters();
         } else {
@@ -152,7 +154,7 @@ function AdminDashboard({ user, activeTab }) {
         });
 
         if (response.ok) {
-          Swal.fire('Success', 'දොස්තරව සාර්ථකව රෙජිස්ටර් කළා මචන්! ✅', 'success');
+          Swal.fire(t('admin_dashboard.swal_success', 'Success'), t('admin_dashboard.swal_doctor_registered', 'Doctor registered successfully! ✅'), 'success');
           setFormData({ doctorName: '', specialization: '', nicNumber: '', phoneNumber: '', password: '', isAvailable: true });
           fetchDoctors();
         } else {
@@ -161,7 +163,7 @@ function AdminDashboard({ user, activeTab }) {
         }
       }
     } catch (err) {
-      setError("Server Error!");
+      setError(t('admin_dashboard.swal_error', 'Error'));
     } finally {
       setLoading(false);
     }
@@ -177,11 +179,11 @@ function AdminDashboard({ user, activeTab }) {
         body: JSON.stringify({ name: roomName })
       });
       if (response.ok) {
-        Swal.fire('Success', 'OPD Room එක සාර්ථකව එකතු කළා මචන්! ✅', 'success');
+        Swal.fire(t('admin_dashboard.swal_success', 'Success'), t('admin_dashboard.swal_room_added', 'OPD Room added successfully! ✅'), 'success');
         setRoomName('');
         fetchRooms();
       } else {
-        Swal.fire('Error', 'Room එක Add කරන්න බැරි වුණා!', 'error');
+        Swal.fire(t('admin_dashboard.swal_error', 'Error'), t('admin_dashboard.swal_room_add_failed', 'Failed to add room!'), 'error');
       }
     } catch(err) { console.error(err); }
     setLoading(false);
@@ -189,8 +191,8 @@ function AdminDashboard({ user, activeTab }) {
 
   const handleDeleteRoom = (id) => {
     Swal.fire({
-      title: 'Are you sure?', text: 'This will delete the room and its assignments!', icon: 'warning',
-      showCancelButton: true, confirmButtonColor: '#e11d48', confirmButtonText: 'Yes, delete it!'
+      title: t('admin_dashboard.swal_delete_room_title', 'Are you sure?'), text: t('admin_dashboard.swal_delete_room_text', 'This will delete the room and its assignments!'), icon: 'warning',
+      showCancelButton: true, confirmButtonColor: '#e11d48', confirmButtonText: t('admin_dashboard.swal_delete', 'Yes, delete it!')
     }).then(async (result) => {
       if (result.isConfirmed) {
          await fetch(`http://localhost:8080/api/rooms/delete/${id}`, { method: 'DELETE' });
@@ -256,7 +258,7 @@ function AdminDashboard({ user, activeTab }) {
             method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(result.value)
          });
          fetchAssignments(roomId);
-         Swal.fire('Assigned!', '', 'success');
+         Swal.fire(t('admin_dashboard.swal_assigned', 'Assigned!'), '', 'success');
        }
     });
   };
@@ -303,11 +305,11 @@ function AdminDashboard({ user, activeTab }) {
               })
            });
            if (response.ok) {
-             Swal.fire('Requested!', 'Transfer request sent to Super Admin.', 'success');
+             Swal.fire(t('admin_dashboard.swal_success', 'Requested!'), t('admin_dashboard.swal_transfer_request_sent', 'Transfer request sent to Super Admin.'), 'success');
            } else {
-             Swal.fire('Error', await response.text(), 'error');
+             Swal.fire(t('admin_dashboard.swal_error', 'Error'), await response.text(), 'error');
            }
-         } catch(err) { Swal.fire('Error', 'Failed to request transfer.', 'error'); }
+         } catch(err) { Swal.fire(t('admin_dashboard.swal_error', 'Error'), 'Failed to request transfer.', 'error'); }
        }
     });
   };
@@ -347,12 +349,12 @@ function AdminDashboard({ user, activeTab }) {
             body: JSON.stringify(result.value)
           });
           if(response.ok) {
-            Swal.fire('Updated!', 'Counter updated successfully', 'success');
+            Swal.fire(t('admin_dashboard.swal_success', 'Updated!'), 'Counter updated successfully', 'success');
             fetchCounters();
           } else {
-            Swal.fire('Error', await response.text(), 'error');
+            Swal.fire(t('admin_dashboard.swal_error', 'Error'), await response.text(), 'error');
           }
-        } catch(e) { Swal.fire('Error', 'Server error', 'error'); }
+        } catch(e) { Swal.fire(t('admin_dashboard.swal_error', 'Error'), 'Server error', 'error'); }
       }
     });
   };
@@ -479,11 +481,11 @@ function AdminDashboard({ user, activeTab }) {
             body: JSON.stringify(payload)
           });
           if(response.ok) {
-            Swal.fire('Requested!', 'Delete request sent to Super Admin.', 'success');
+            Swal.fire(t('admin_dashboard.swal_success', 'Requested!'), 'Delete request sent to Super Admin.', 'success');
           } else {
-            Swal.fire('Error', await response.text(), 'error');
+            Swal.fire(t('admin_dashboard.swal_error', 'Error'), await response.text(), 'error');
           }
-        } catch(e) { Swal.fire('Error', 'Server error', 'error'); }
+        } catch(e) { Swal.fire(t('admin_dashboard.swal_error', 'Error'), 'Server error', 'error'); }
       }
     });
   };
@@ -494,43 +496,43 @@ function AdminDashboard({ user, activeTab }) {
       {activeTab === 'Manage OPD Rooms' ? (
         <div className="space-y-10">
           <div className="max-w-4xl p-8 mx-auto bg-white border shadow-sm rounded-3xl border-slate-200">
-            <h3 className="mb-6 text-2xl font-black text-slate-800">🚪 Manage OPD Rooms</h3>
+            <h3 className="mb-6 text-2xl font-black text-slate-800">{t('admin_dashboard.manage_opd_rooms', '🚪 Manage OPD Rooms')}</h3>
             <form onSubmit={handleAddRoom} className="flex gap-4 items-end">
               <div className="flex-1 space-y-2">
-                <label className="text-xs font-bold uppercase text-slate-400">Room Name</label>
+                <label className="text-xs font-bold uppercase text-slate-400">{t('admin_dashboard.room_name_label', 'Room Name')}</label>
                 <input 
-                  type="text" required placeholder="e.g. OPD Room 01, Eye Clinic"
+                  type="text" required placeholder={t('admin_dashboard.room_name_placeholder', 'e.g. OPD Room 01, Eye Clinic')}
                   className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50 focus:ring-2 focus:ring-teal-500"
                   value={roomName} onChange={(e) => setRoomName(e.target.value)}
                 />
               </div>
               <button type="submit" disabled={loading} className="px-8 py-3.5 bg-teal-600 text-white font-black rounded-xl shadow-lg">
-                Add Room
+                {t('admin_dashboard.add_room', 'Add Room')}
               </button>
             </form>
           </div>
 
           <div className="max-w-6xl mx-auto overflow-hidden bg-white border shadow-sm rounded-3xl border-slate-200">
             <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-              <h3 className="text-xl font-black text-slate-800">Hospital OPD Rooms</h3>
+              <h3 className="text-xl font-black text-slate-800">{t('admin_dashboard.hospital_opd_rooms', 'Hospital OPD Rooms')}</h3>
             </div>
             <div className="p-6 space-y-6">
               {rooms.length === 0 ? (
-                <p className="text-center text-slate-400 font-bold">කිසිම OPD කාමරයක් මෙතෙක් එකතු කර නැත.</p>
+                <p className="text-center text-slate-400 font-bold">{t('admin_dashboard.no_rooms_added', 'No OPD rooms have been added yet.')}</p>
               ) : (
                 rooms.map(room => (
                   <div key={room.id} className="border border-slate-200 rounded-2xl p-6 bg-slate-50">
                     <div className="flex justify-between items-center mb-4">
                       <h4 className="text-lg font-black text-slate-700">{room.name}</h4>
                       <div className="space-x-2">
-                        <button onClick={() => handleAssignDoctor(room.id)} className="px-3 py-1.5 text-xs font-bold text-teal-700 bg-teal-100 rounded-lg hover:bg-teal-200">Assign Doctor</button>
-                        <button onClick={() => handleDeleteRoom(room.id)} className="px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-100 rounded-lg hover:bg-rose-200">Delete Room</button>
+                        <button onClick={() => handleAssignDoctor(room.id)} className="px-3 py-1.5 text-xs font-bold text-teal-700 bg-teal-100 rounded-lg hover:bg-teal-200">{t('admin_dashboard.assign_doctor', 'Assign Doctor')}</button>
+                        <button onClick={() => handleDeleteRoom(room.id)} className="px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-100 rounded-lg hover:bg-rose-200">{t('admin_dashboard.delete_room', 'Delete Room')}</button>
                       </div>
                     </div>
                     
                     {assignments[room.id] && assignments[room.id].length > 0 ? (
                       <div className="mt-4 space-y-2">
-                        <h5 className="text-xs font-bold uppercase text-slate-400">Assigned Doctors:</h5>
+                        <h5 className="text-xs font-bold uppercase text-slate-400">{t('admin_dashboard.assigned_doctors', 'Assigned Doctors:')}</h5>
                         {assignments[room.id].map(assign => (
                           <div key={assign.id} className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
                             <div>
@@ -538,12 +540,12 @@ function AdminDashboard({ user, activeTab }) {
                               <span className="text-xs text-slate-500 ml-2">({assign.doctor.specialization})</span>
                               <span className="text-sm font-semibold text-teal-600 ml-4">🕒 {assign.timePeriod}</span>
                             </div>
-                            <button onClick={() => handleRemoveAssignment(assign.id, room.id)} className="text-rose-500 hover:text-rose-700 font-bold text-xs">Remove</button>
+                            <button onClick={() => handleRemoveAssignment(assign.id, room.id)} className="text-rose-500 hover:text-rose-700 font-bold text-xs">{t('admin_dashboard.remove', 'Remove')}</button>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs font-bold text-slate-400 mt-2">No doctors assigned yet.</p>
+                      <p className="text-xs font-bold text-slate-400 mt-2">{t('admin_dashboard.no_doctors_assigned', 'No doctors assigned yet.')}</p>
                     )}
                   </div>
                 ))
@@ -556,7 +558,7 @@ function AdminDashboard({ user, activeTab }) {
           {/* REGISTER FORM */}
           <div className="max-w-4xl p-8 mx-auto bg-white border shadow-sm rounded-3xl border-slate-200">
         <h3 className="mb-6 text-2xl font-black text-slate-800">
-          {activeTab === 'Manage Counters' ? '🧑‍💻 Register Counter Staff' : activeTab === 'Manage Communication Centers' ? '📞 Register Communication Center' : '👨‍⚕️ Register New Doctor'}
+          {activeTab === 'Manage Counters' ? t('admin_dashboard.register_counter_staff', '🧑‍💻 Register Counter Staff') : activeTab === 'Manage Communication Centers' ? t('admin_dashboard.register_communication_center', '📞 Register Communication Center') : t('admin_dashboard.register_new_doctor', '👨‍⚕️ Register New Doctor')}
         </h3>
         
         {error && (
@@ -571,9 +573,9 @@ function AdminDashboard({ user, activeTab }) {
             <>
               {activeTab === 'Manage Counters' ? (
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-slate-400">Staff Full Name</label>
+                  <label className="text-xs font-bold uppercase text-slate-400">{t('admin_dashboard.staff_full_name', 'Staff Full Name')}</label>
                   <input 
-                    type="text" required placeholder="Saman Perera"
+                    type="text" required placeholder={t('admin_dashboard.staff_name_placeholder', 'Saman Perera')}
                     className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50 focus:ring-2 focus:ring-teal-500"
                     value={counterFormData.fullName}
                     onChange={(e) => setCounterFormData({...counterFormData, fullName: e.target.value})}
@@ -583,9 +585,9 @@ function AdminDashboard({ user, activeTab }) {
 
               {activeTab === 'Manage Counters' ? (
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-slate-400">Assigned Counter Name</label>
+                  <label className="text-xs font-bold uppercase text-slate-400">{t('admin_dashboard.assigned_counter_name', 'Assigned Counter Name')}</label>
                   <input 
-                    type="text" required placeholder="e.g. Counter 01, Pharmacy Counter"
+                    type="text" required placeholder={t('admin_dashboard.counter_name_placeholder', 'e.g. Counter 01, Pharmacy Counter')}
                     className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50 focus:ring-2 focus:ring-teal-500"
                     value={counterFormData.counterNumber}
                     onChange={(e) => setCounterFormData({...counterFormData, counterNumber: e.target.value})}
@@ -600,9 +602,9 @@ function AdminDashboard({ user, activeTab }) {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-slate-400">Center Name</label>
+                  <label className="text-xs font-bold uppercase text-slate-400">{t('admin_dashboard.center_name_label', 'Center Name')}</label>
                   <input 
-                    type="text" required placeholder="e.g. Center 01, Super Comm"
+                    type="text" required placeholder={t('admin_dashboard.center_name_placeholder', 'e.g. Center 01, Super Comm')}
                     className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50 focus:ring-2 focus:ring-teal-500"
                     value={counterFormData.counterNumber}
                     onChange={(e) => setCounterFormData({...counterFormData, counterNumber: e.target.value})}
@@ -611,9 +613,9 @@ function AdminDashboard({ user, activeTab }) {
               )}
 
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-slate-400">NIC Number (For Login)</label>
+                <label className="text-xs font-bold uppercase text-slate-400">{t('admin_dashboard.nic_number', 'NIC Number (For Login)')}</label>
                 <input 
-                  type="text" required placeholder="199512345678"
+                  type="text" required placeholder={t('admin_dashboard.nic_placeholder', '199512345678')}
                   className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50 focus:ring-2 focus:ring-teal-500"
                   value={counterFormData.nicNumber}
                   onChange={(e) => setCounterFormData({...counterFormData, nicNumber: e.target.value})}
@@ -621,9 +623,9 @@ function AdminDashboard({ user, activeTab }) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-slate-400">Phone Number</label>
+                <label className="text-xs font-bold uppercase text-slate-400">{t('admin_dashboard.phone_number', 'Phone Number')}</label>
                 <input 
-                  type="text" required placeholder="0771234567"
+                  type="text" required placeholder={t('admin_dashboard.phone_placeholder', '0771234567')}
                   className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50 focus:ring-2 focus:ring-teal-500"
                   value={counterFormData.phoneNumber}
                   onChange={(e) => setCounterFormData({...counterFormData, phoneNumber: e.target.value})}
@@ -631,7 +633,7 @@ function AdminDashboard({ user, activeTab }) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-slate-400">Login Password</label>
+                <label className="text-xs font-bold uppercase text-slate-400">{t('admin_dashboard.login_password', 'Login Password')}</label>
                 <div className="relative">
                   <input 
                     type={showPassword ? "text" : "password"} required placeholder="••••••••" 
@@ -651,16 +653,16 @@ function AdminDashboard({ user, activeTab }) {
               
               <div className="flex items-end">
                 <button type="submit" disabled={loading} className="w-full py-3.5 bg-teal-600 text-white font-black rounded-xl shadow-lg">
-                  {loading ? "Saving to Registry..." : (activeTab === 'Manage Counters' ? "Add Counter Staff" : "Add Communication Center")}
+                  {loading ? t('admin_dashboard.saving', "Saving to Registry...") : (activeTab === 'Manage Counters' ? t('admin_dashboard.add_counter_staff', "Add Counter Staff") : t('admin_dashboard.add_communication_center', "Add Communication Center"))}
                 </button>
               </div>
             </>
           ) : (
             <>
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-slate-400">Doctor Name</label>
+                <label className="text-xs font-bold uppercase text-slate-400">{t('admin_dashboard.doctor_name', 'Doctor Name')}</label>
                 <input 
-                  type="text" required placeholder="Dr. Kavindu"
+                  type="text" required placeholder={t('admin_dashboard.doctor_name_placeholder', 'Dr. Kavindu')}
                   className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50 focus:ring-2 focus:ring-teal-500"
                   value={formData.doctorName}
                   onChange={(e) => setFormData({...formData, doctorName: e.target.value})}
@@ -668,9 +670,9 @@ function AdminDashboard({ user, activeTab }) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-slate-400">Specialization</label>
+                <label className="text-xs font-bold uppercase text-slate-400">{t('admin_dashboard.specialization', 'Specialization')}</label>
                 <input 
-                  type="text" required placeholder="Cardiologist" 
+                  type="text" required placeholder={t('admin_dashboard.specialization_placeholder', 'Cardiologist')}
                   className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50 focus:ring-2 focus:ring-teal-500"
                   value={formData.specialization}
                   onChange={(e) => setFormData({...formData, specialization: e.target.value})}
@@ -678,9 +680,9 @@ function AdminDashboard({ user, activeTab }) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-slate-400">NIC Number (For Login)</label>
+                <label className="text-xs font-bold uppercase text-slate-400">{t('admin_dashboard.nic_number', 'NIC Number (For Login)')}</label>
                 <input 
-                  type="text" required placeholder="199512345678"
+                  type="text" required placeholder={t('admin_dashboard.nic_placeholder', '199512345678')}
                   className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50 focus:ring-2 focus:ring-teal-500"
                   value={formData.nicNumber}
                   onChange={(e) => setFormData({...formData, nicNumber: e.target.value})}
@@ -688,9 +690,9 @@ function AdminDashboard({ user, activeTab }) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-slate-400">Phone Number</label>
+                <label className="text-xs font-bold uppercase text-slate-400">{t('admin_dashboard.phone_number', 'Phone Number')}</label>
                 <input 
-                  type="text" required placeholder="0771234567"
+                  type="text" required placeholder={t('admin_dashboard.phone_placeholder', '0771234567')}
                   className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50 focus:ring-2 focus:ring-teal-500"
                   value={formData.phoneNumber}
                   onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})}
@@ -698,7 +700,7 @@ function AdminDashboard({ user, activeTab }) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-slate-400">Login Password</label>
+                <label className="text-xs font-bold uppercase text-slate-400">{t('admin_dashboard.login_password', 'Login Password')}</label>
                 <div className="relative">
                   <input 
                     type={showPassword ? "text" : "password"} required placeholder="••••••••" 
@@ -718,7 +720,7 @@ function AdminDashboard({ user, activeTab }) {
 
               <div className="flex items-end">
                 <button type="submit" disabled={loading} className="w-full py-3.5 bg-teal-600 text-white font-black rounded-xl shadow-lg mt-4">
-                  {loading ? "Saving to Registry..." : "Add Doctor to Registry"}
+                  {loading ? t('admin_dashboard.saving', "Saving to Registry...") : t('admin_dashboard.add_doctor', "Add Doctor to Registry")}
                 </button>
               </div>
             </>
@@ -731,10 +733,10 @@ function AdminDashboard({ user, activeTab }) {
       <div className="max-w-6xl mx-auto overflow-hidden bg-white border shadow-sm rounded-3xl border-slate-200">
         <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
           <h3 className="text-xl font-black text-slate-800">
-            {activeTab === 'Manage Counters' ? 'Hospital Counter Staff' : activeTab === 'Manage Communication Centers' ? 'Communication Centers' : 'Hospital Medical Registry'}
+            {activeTab === 'Manage Counters' ? t('admin_dashboard.hospital_counter_staff', 'Hospital Counter Staff') : activeTab === 'Manage Communication Centers' ? t('admin_dashboard.communication_centers', 'Communication Centers') : t('admin_dashboard.hospital_medical_registry', 'Hospital Medical Registry')}
           </h3>
           <span className="px-4 py-1 text-xs font-black text-teal-700 uppercase bg-teal-100 rounded-full">
-            Total: {activeTab === 'Manage Counters' ? counters.length : activeTab === 'Manage Communication Centers' ? centers.length : doctors.length} {activeTab === 'Manage Counters' ? 'Staff' : activeTab === 'Manage Communication Centers' ? 'Centers' : 'Doctors'}
+            {t('admin_dashboard.total', 'Total')}: {activeTab === 'Manage Counters' ? counters.length : activeTab === 'Manage Communication Centers' ? centers.length : doctors.length} {activeTab === 'Manage Counters' ? t('admin_dashboard.staff', 'Staff') : activeTab === 'Manage Communication Centers' ? t('admin_dashboard.centers', 'Centers') : t('admin_dashboard.doctors', 'Doctors')}
           </span>
         </div>
 
@@ -744,18 +746,18 @@ function AdminDashboard({ user, activeTab }) {
               <tr className="text-xs font-bold uppercase border-b text-slate-400 bg-slate-50/80 border-slate-100">
                 {activeTab === 'Manage Counters' || activeTab === 'Manage Communication Centers' ? (
                   <>
-                    <th className="p-6">{activeTab === 'Manage Counters' ? 'Staff Name' : 'User'}</th>
-                    <th className="p-6">{activeTab === 'Manage Counters' ? 'Counter Number' : 'Center Name'}</th>
-                    <th className="p-6">Phone Number</th>
-                    <th className="p-6 text-right">Actions</th>
+                    <th className="p-6">{activeTab === 'Manage Counters' ? t('admin_dashboard.staff_name', 'Staff Name') : t('admin_dashboard.user', 'User')}</th>
+                    <th className="p-6">{activeTab === 'Manage Counters' ? t('admin_dashboard.counter_number', 'Counter Number') : t('admin_dashboard.center_name_label', 'Center Name')}</th>
+                    <th className="p-6">{t('admin_dashboard.phone_number', 'Phone Number')}</th>
+                    <th className="p-6 text-right">{t('admin_dashboard.actions', 'Actions')}</th>
                   </>
                 ) : (
                   <>
-                    <th className="p-6">Doctor Name</th>
-                    <th className="p-6">Specialization</th>
-                    <th className="p-6">Room Number</th>
-                    <th className="p-6">Status</th>
-                    <th className="p-6 text-right">Actions</th>
+                    <th className="p-6">{t('admin_dashboard.doctor_name', 'Doctor Name')}</th>
+                    <th className="p-6">{t('admin_dashboard.specialization', 'Specialization')}</th>
+                    <th className="p-6">{t('admin_dashboard.room_number', 'Room Number')}</th>
+                    <th className="p-6">{t('admin_dashboard.status', 'Status')}</th>
+                    <th className="p-6 text-right">{t('admin_dashboard.actions', 'Actions')}</th>
                   </>
                 )}
               </tr>
@@ -765,18 +767,18 @@ function AdminDashboard({ user, activeTab }) {
                 counters.length === 0 ? (
                   <tr>
                     <td colSpan="4" className="p-10 font-bold text-center text-slate-400">
-                      Registry එකේ දැනට කවුන්ටර් Staff කවුරුත් නෑ මචන්!
+                      {t('admin_dashboard.no_counter_staff_in_registry', 'No counter staff in the registry currently!')}
                     </td>
                   </tr>
                 ) : (
                   counters.map((counter) => (
                     <tr key={counter.id} className="transition hover:bg-slate-50/80">
-                      <td className="p-6 font-bold text-slate-700">{counter.fullName || 'නමක් නෑ'}</td>
-                      <td className="p-6 font-semibold text-teal-700">{counter.counterNumber || 'Counter නෑ'}</td>
-                      <td className="p-6 font-medium text-slate-500">{counter.user?.phoneNumber || 'Phone නෑ'}</td>
+                      <td className="p-6 font-bold text-slate-700">{counter.fullName || ''}</td>
+                      <td className="p-6 font-semibold text-teal-700">{counter.counterNumber || ''}</td>
+                      <td className="p-6 font-medium text-slate-500">{counter.user?.phoneNumber || ''}</td>
                       <td className="p-6 space-x-2 text-right">
-                        <button onClick={() => handleEditCounter(counter)} className="px-3 py-1.5 text-xs font-bold text-teal-700 bg-teal-100 rounded-lg hover:bg-teal-200">Edit</button>
-                        <button onClick={() => handleDeleteCounter(counter.id)} className="px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-100 rounded-lg hover:bg-rose-200">Delete</button>
+                        <button onClick={() => handleEditCounter(counter)} className="px-3 py-1.5 text-xs font-bold text-teal-700 bg-teal-100 rounded-lg hover:bg-teal-200">{t('admin_dashboard.edit', 'Edit')}</button>
+                        <button onClick={() => handleDeleteCounter(counter.id)} className="px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-100 rounded-lg hover:bg-rose-200">{t('admin_dashboard.delete', 'Delete')}</button>
                       </td>
                     </tr>
                   ))
@@ -785,17 +787,17 @@ function AdminDashboard({ user, activeTab }) {
                 centers.length === 0 ? (
                   <tr>
                     <td colSpan="4" className="p-10 font-bold text-center text-slate-400">
-                      Registry එකේ දැනට Communication Centers කවුරුත් නෑ මචන්!
+                      {t('admin_dashboard.no_centers_in_registry', 'No communication centers in the registry currently!')}
                     </td>
                   </tr>
                 ) : (
                   centers.map((center) => (
                     <tr key={center.id} className="transition hover:bg-slate-50/80">
-                      <td className="p-6 font-bold text-slate-700">{center.user?.nicNumber || 'NIC නෑ'}</td>
-                      <td className="p-6 font-semibold text-teal-700">{center.centerName || 'Center නෑ'}</td>
-                      <td className="p-6 font-medium text-slate-500">{center.user?.phoneNumber || 'Phone නෑ'}</td>
+                      <td className="p-6 font-bold text-slate-700">{center.user?.nicNumber || ''}</td>
+                      <td className="p-6 font-semibold text-teal-700">{center.centerName || ''}</td>
+                      <td className="p-6 font-medium text-slate-500">{center.user?.phoneNumber || ''}</td>
                       <td className="p-6 space-x-2 text-right">
-                        <button onClick={() => handleDeleteCenter(center.id)} className="px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-100 rounded-lg hover:bg-rose-200">Delete</button>
+                        <button onClick={() => handleDeleteCenter(center.id)} className="px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-100 rounded-lg hover:bg-rose-200">{t('admin_dashboard.delete', 'Delete')}</button>
                       </td>
                     </tr>
                   ))
@@ -804,26 +806,26 @@ function AdminDashboard({ user, activeTab }) {
                 doctors.length === 0 ? (
                   <tr>
                     <td colSpan="5" className="p-10 font-bold text-center text-slate-400">
-                      Registry එකේ දැනට දොස්තරලා කවුරුත් නෑ මචන්!
+                      {t('admin_dashboard.no_doctors_in_registry', 'No doctors in the registry currently!')}
                     </td>
                   </tr>
                 ) : (
                   doctors.map((doc) => (
                     <tr key={doc.id} className="transition hover:bg-slate-50/80">
-                      <td className="p-6 font-bold text-slate-700">{doc.doctorName || 'නමක් නෑ'}</td>
-                      <td className="p-6 font-medium text-slate-500">{doc.specialization || 'විශේෂඥතාවක් නෑ'}</td>
-                      <td className="p-6 font-semibold text-teal-700">{doc.roomNumber || 'කාමරයක් නෑ'}</td>
+                      <td className="p-6 font-bold text-slate-700">{doc.doctorName || ''}</td>
+                      <td className="p-6 font-medium text-slate-500">{doc.specialization || ''}</td>
+                      <td className="p-6 font-semibold text-teal-700">{doc.roomNumber || ''}</td>
                       <td className="p-6">
                         <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${
                           doc.available === true || doc.available === 1 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
                         }`}>
-                          {doc.available === true || doc.available === 1 ? 'AVAILABLE' : 'ON LEAVE'}
+                          {doc.available === true || doc.available === 1 ? t('admin_dashboard.available', 'AVAILABLE') : t('admin_dashboard.on_leave', 'ON LEAVE')}
                         </span>
                       </td>
                       <td className="p-6 space-x-2 text-right">
-                        <button onClick={() => handleRequestTransfer(doc)} className="px-3 py-1.5 text-xs font-bold text-amber-700 bg-amber-100 rounded-lg hover:bg-amber-200">Transfer</button>
-                        <button onClick={() => handleEditDoctor(doc)} className="px-3 py-1.5 text-xs font-bold text-teal-700 bg-teal-100 rounded-lg hover:bg-teal-200">Edit</button>
-                        <button onClick={() => handleDeleteDoctor(doc.id)} className="px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-100 rounded-lg hover:bg-rose-200">Delete</button>
+                        <button onClick={() => handleRequestTransfer(doc)} className="px-3 py-1.5 text-xs font-bold text-amber-700 bg-amber-100 rounded-lg hover:bg-amber-200">{t('admin_dashboard.transfer', 'Transfer')}</button>
+                        <button onClick={() => handleEditDoctor(doc)} className="px-3 py-1.5 text-xs font-bold text-teal-700 bg-teal-100 rounded-lg hover:bg-teal-200">{t('admin_dashboard.edit', 'Edit')}</button>
+                        <button onClick={() => handleDeleteDoctor(doc.id)} className="px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-100 rounded-lg hover:bg-rose-200">{t('admin_dashboard.delete', 'Delete')}</button>
                       </td>
                     </tr>
                   ))

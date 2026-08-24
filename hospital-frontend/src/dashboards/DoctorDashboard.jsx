@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
+import { useTranslation } from 'react-i18next';
 
 function DoctorDashboard({ user }) {
+  const { t } = useTranslation();
   const [currentlyTreating, setCurrentlyTreating] = useState(null);
   const [upcomingPatients, setUpcomingPatients] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -548,9 +550,9 @@ function DoctorDashboard({ user }) {
         {/* 🏥 1. Top Bar */}
         <div className="flex flex-col items-center justify-between gap-4 p-6 bg-white border shadow-sm md:flex-row rounded-3xl border-slate-200 mb-8">
           <div>
-            <h2 className="text-3xl font-black text-slate-800 tracking-tight">Doctor Dashboard</h2>
+            <h2 className="text-3xl font-black text-slate-800 tracking-tight">{t('doctor_dashboard.title', 'Doctor Dashboard')}</h2>
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-1">
-              <p className="text-slate-500 font-medium">Manage your queue and patient consultations</p>
+              <p className="text-slate-500 font-medium">{t('doctor_dashboard.subtitle', 'Manage your queue and patient consultations')}</p>
               {hospitalDetails && (
                 <>
                   <span className="hidden sm:inline text-slate-300">•</span>
@@ -570,7 +572,7 @@ function DoctorDashboard({ user }) {
                   : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
               }`}
             >
-              {isAvailable ? '🟢 Active & Accepting' : '⛔ On Leave / Paused'}
+              {isAvailable ? t('doctor_dashboard.active_accepting', '🟢 Active & Accepting') : t('doctor_dashboard.on_leave_paused', '⛔ On Leave / Paused')}
             </button>
           </div>
         </div>
@@ -582,7 +584,7 @@ function DoctorDashboard({ user }) {
           <div className="lg:col-span-2">
             <h3 className="mb-6 text-xl font-black text-slate-800 flex items-center gap-2">
               <span className="w-8 h-8 flex items-center justify-center bg-teal-100 text-teal-600 rounded-full text-sm">🩺</span>
-              Currently Treating
+              {t('doctor_dashboard.currently_treating', 'Currently Treating')}
             </h3>
             
             {currentlyTreating ? (
@@ -597,11 +599,11 @@ function DoctorDashboard({ user }) {
                       <span className={`inline-block px-3 py-1 mb-2 text-xs font-bold rounded-full ${
                         currentlyTreating.isPriority ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
                       }`}>
-                        {currentlyTreating.isPriority ? 'Priority Patient' : 'Standard Patient'}
+                        {currentlyTreating.isPriority ? t('doctor_dashboard.priority_patient', 'Priority Patient') : t('doctor_dashboard.standard_patient', 'Standard Patient')}
                       </span>
                       <h4 className="text-2xl font-black text-slate-800">{currentlyTreating.patientName}</h4>
                       <div className="flex items-center gap-4 mt-2 text-sm font-bold text-slate-500">
-                        <span>Status: <span className="text-teal-600">{currentlyTreating.status}</span></span>
+                        <span>{t('doctor_dashboard.status', 'Status:')} <span className="text-teal-600">{currentlyTreating.status}</span></span>
                       </div>
                     </div>
                   </div>
@@ -613,7 +615,7 @@ function DoctorDashboard({ user }) {
                         disabled={loading}
                         className="px-8 py-4 font-black text-white transition shadow-xl bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl hover:scale-105 shadow-teal-600/30 active:scale-95 disabled:opacity-50"
                       >
-                        {loading ? 'Starting...' : 'Start Consultation'}
+                        {loading ? t('doctor_dashboard.starting', 'Starting...') : t('doctor_dashboard.start_consultation', 'Start Consultation')}
                       </button>
                     ) : (
                       <div className="flex gap-3">
@@ -622,14 +624,14 @@ function DoctorDashboard({ user }) {
                           disabled={loading}
                           className="px-6 py-3 font-bold text-slate-700 transition bg-slate-100 border border-slate-200 rounded-xl hover:bg-slate-200 shadow-sm active:scale-95 flex items-center gap-2"
                         >
-                          Pause ⏸️
+                          {t('doctor_dashboard.pause', 'Pause ⏸️')}
                         </button>
                         <button
                           onClick={() => handleCompleteConsultation(true)}
                           disabled={loading}
                           className="px-6 py-3 font-black text-white transition shadow-lg bg-teal-600 rounded-xl hover:bg-teal-700 shadow-teal-600/30 active:scale-95 flex items-center gap-2"
                         >
-                          ✅ Done & Call Next
+                          {t('doctor_dashboard.done_call_next', '✅ Done & Call Next')}
                         </button>
                       </div>
                     )}
@@ -639,14 +641,14 @@ function DoctorDashboard({ user }) {
             ) : (
               <div className="flex flex-col items-center justify-center p-12 text-center bg-white border border-dashed rounded-3xl border-slate-300">
                 <span className="mb-4 text-5xl">☕</span>
-                <h4 className="text-xl font-bold text-slate-700">No Active Patient</h4>
-                <p className="mt-2 text-slate-500 font-medium">Click "Call Next Patient" to start serving the queue.</p>
+                <h4 className="text-xl font-bold text-slate-700">{t('doctor_dashboard.no_active_patient', 'No Active Patient')}</h4>
+                <p className="mt-2 text-slate-500 font-medium">{t('doctor_dashboard.no_active_patient_desc', 'Click "Call Next Patient" to start serving the queue.')}</p>
                 <button
                   onClick={handleCallNext}
                   disabled={loading || upcomingPatients.length === 0}
                   className="px-8 py-3 mt-6 font-bold text-white transition shadow-lg bg-slate-800 rounded-xl hover:bg-slate-700 shadow-slate-800/20 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
                 >
-                  {loading ? 'Calling...' : 'Call Next Patient 📢'}
+                  {loading ? t('doctor_dashboard.calling', 'Calling...') : t('doctor_dashboard.call_next_patient', 'Call Next Patient 📢')}
                 </button>
               </div>
             )}
@@ -656,7 +658,7 @@ function DoctorDashboard({ user }) {
           <div>
             <h3 className="mb-6 text-xl font-black text-slate-800 flex items-center gap-2">
               <span className="w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full text-sm">⏳</span>
-              Up Next
+              {t('doctor_dashboard.up_next', 'Up Next')}
             </h3>
             <div className="p-2 space-y-3 bg-white border shadow-sm rounded-3xl border-slate-200 h-[350px] overflow-y-auto custom-scrollbar">
               {upcomingPatients.length > 0 ? (
@@ -668,19 +670,19 @@ function DoctorDashboard({ user }) {
                       </div>
                       <div>
                         <h4 className="text-sm font-bold text-slate-700">{patient.patientName}</h4>
-                        <p className="text-xs text-slate-400 font-semibold mt-0.5">Position: #{index + 1}</p>
+                        <p className="text-xs text-slate-400 font-semibold mt-0.5">{t('doctor_dashboard.position', 'Position:')} #{index + 1}</p>
                       </div>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-[11px] font-bold ${
                       patient.isPriority ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-blue-50 text-blue-600 border border-blue-100'
                     }`}>
-                      {patient.isPriority ? 'Priority' : 'Standard'}
+                      {patient.isPriority ? t('doctor_dashboard.priority', 'Priority') : t('doctor_dashboard.standard', 'Standard')}
                     </span>
                   </div>
                 ))
               ) : (
                 <div className="py-12 text-sm font-medium text-center text-slate-400">
-                  පෝලිමේ ඉදිරියට පැමිණීමට ලෙඩ්ඩු කවුරුත් නැත මචන්. 🎉
+                  {t('doctor_dashboard.queue_empty', 'No patients waiting in the queue. 🎉')}
                 </div>
               )}
             </div>
@@ -694,7 +696,7 @@ function DoctorDashboard({ user }) {
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h3 className="text-xl font-black text-slate-800 flex items-center gap-2 mb-3">
-                  <span className="text-2xl">📋</span> Patient History & Prescription
+                  <span className="text-2xl">📋</span> {t('doctor_dashboard.patient_history_prescription', 'Patient History & Prescription')}
                 </h3>
                 
                 {/* Patient Important Details Extracted from NIC */}
@@ -707,10 +709,10 @@ function DoctorDashboard({ user }) {
                         👤 {currentlyTreating.patientName}
                       </span>
                       <span className="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 shadow-sm">
-                        🎂 DOB: {details.dob}
+                        🎂 {t('doctor_dashboard.dob', 'DOB')}: {details.dob}
                       </span>
                       <span className="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 shadow-sm">
-                        ⏳ Age: {details.ageString}
+                        ⏳ {t('doctor_dashboard.age', 'Age')}: {details.ageString}
                       </span>
                       <span className="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 shadow-sm">
                         🚻 {details.gender}
@@ -734,7 +736,7 @@ function DoctorDashboard({ user }) {
                   showAddForm ? 'bg-rose-100 text-rose-600 hover:bg-rose-200' : 'bg-teal-600 text-white hover:bg-teal-700 shadow-teal-600/20'
                 }`}
               >
-                {showAddForm ? 'Cancel Prescription' : '+ Write Prescription'}
+                {showAddForm ? t('doctor_dashboard.cancel_prescription', 'Cancel Prescription') : t('doctor_dashboard.write_prescription', '+ Write Prescription')}
               </button>
             </div>
 
@@ -743,11 +745,11 @@ function DoctorDashboard({ user }) {
               <form onSubmit={handleSubmitRecord} className="bg-white p-6 rounded-2xl shadow-sm border border-teal-100 mb-6 space-y-5 animate-fade-in relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-1 h-full bg-teal-500"></div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-600 mb-1">Diagnosis / Illness <span className="text-rose-500">*</span></label>
+                  <label className="block text-sm font-bold text-slate-600 mb-1">{t('doctor_dashboard.diagnosis_illness', 'Diagnosis / Illness')} <span className="text-rose-500">*</span></label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Viral Fever"
+                    placeholder={t('doctor_dashboard.diagnosis_placeholder', 'e.g. Viral Fever')}
                     value={formData.diagnosis}
                     onChange={e => setFormData({...formData, diagnosis: e.target.value})}
                     className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
@@ -757,19 +759,19 @@ function DoctorDashboard({ user }) {
                 {/* Internal Pharmacy Section */}
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <label className="block text-sm font-bold text-slate-600">Smart Prescription (Hospital Pharmacy)</label>
+                    <label className="block text-sm font-bold text-slate-600">{t('doctor_dashboard.smart_prescription', 'Smart Prescription (Hospital Pharmacy)')}</label>
                     <button 
                       type="button" 
                       onClick={addPrescriptionRow}
                       className="text-xs font-bold text-teal-600 hover:text-teal-700 bg-teal-50 hover:bg-teal-100 px-3 py-1.5 rounded-lg transition"
                     >
-                      + Add Medicine
+                      {t('doctor_dashboard.add_medicine', '+ Add Medicine')}
                     </button>
                   </div>
                   
                   {formData.prescriptionRows.length === 0 ? (
                     <div className="p-4 border border-dashed border-slate-300 rounded-xl bg-slate-50 text-center text-sm font-medium text-slate-400">
-                      No pharmacy medicines added. Click "+ Add Medicine".
+                      {t('doctor_dashboard.no_pharmacy_medicines', 'No pharmacy medicines added. Click "+ Add Medicine".')}
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -784,7 +786,7 @@ function DoctorDashboard({ user }) {
                           </button>
                           
                           <div className="flex-1 min-w-[200px]">
-                            <label className="block text-xs font-bold text-slate-500 mb-1">Medicine Name</label>
+                            <label className="block text-xs font-bold text-slate-500 mb-1">{t('doctor_dashboard.medicine_name', 'Medicine Name')}</label>
                             <input
                               required
                               list={`med-list-${row.id}`}
@@ -803,67 +805,66 @@ function DoctorDashboard({ user }) {
                               className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
                             />
                             <datalist id={`med-list-${row.id}`}>
-                              {availableMedicines.map(med => (
+                      {availableMedicines.map(med => (
                                 <option key={med.id} value={med.name}>
-                                  {med.availableQuantity > 0 ? `(${med.availableQuantity} ${med.unit} left)` : '(Out of stock)'}
+                                  {med.availableQuantity > 0 ? `(${med.availableQuantity} ${med.unit} left)` : t('doctor_dashboard.out_of_stock', '(Out of stock)')}
                                 </option>
                               ))}
                             </datalist>
                           </div>
                           
-                          <div className="w-full md:w-32">
-                            <label className="block text-xs font-bold text-slate-500 mb-1">Frequency</label>
-                            <input
-                              list={`freq-list-${row.id}`}
-                              required
-                              value={row.frequency}
+                          <div className="w-full md:w-40">
+                            <label className="block text-xs font-bold text-slate-500 mb-1">{t('doctor_dashboard.frequency', 'Frequency')}</label>
+                            <select 
+                              value={row.frequency} 
                               onChange={(e) => updatePrescriptionRow(row.id, 'frequency', e.target.value)}
-                              placeholder="e.g. 8 Hourly"
-                              className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
-                            />
-                            <datalist id={`freq-list-${row.id}`}>
-                              <option value="6 Hourly" />
-                              <option value="8 Hourly" />
-                              <option value="12 Hourly" />
-                              <option value="Morning Only" />
-                              <option value="Night Only" />
-                              <option value="Morning & Night" />
-                            </datalist>
+                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none text-sm font-bold"
+                            >
+                              <option value="6 Hourly">{t('doctor_dashboard.freq_6h', '6 Hourly (QID)')}</option>
+                              <option value="8 Hourly">{t('doctor_dashboard.freq_8h', '8 Hourly (TDS)')}</option>
+                              <option value="12 Hourly">{t('doctor_dashboard.freq_12h', '12 Hourly (BD)')}</option>
+                              <option value="Morning Only">{t('doctor_dashboard.freq_om', 'Morning Only (OM)')}</option>
+                              <option value="Night Only">{t('doctor_dashboard.freq_on', 'Night Only (ON)')}</option>
+                              <option value="Morning & Night">{t('doctor_dashboard.freq_bd', 'Morning & Night (BD)')}</option>
+                            </select>
                           </div>
 
                           <div className="w-full md:w-32">
-                            <label className="block text-xs font-bold text-slate-500 mb-1">Meal Timing</label>
+                            <label className="block text-xs font-bold text-slate-500 mb-1">{t('doctor_dashboard.meal_timing', 'Meal Timing')}</label>
                             <select
                               value={row.mealTiming || 'After Meal'}
                               onChange={(e) => updatePrescriptionRow(row.id, 'mealTiming', e.target.value)}
                               className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none font-bold text-teal-700"
                             >
-                              <option value="After Meal">After Meal</option>
-                              <option value="Before Meal">Before Meal</option>
+                              <option value="After Meal">{t('doctor_dashboard.after_meal', 'After Meal')}</option>
+                              <option value="Before Meal">{t('doctor_dashboard.before_meal', 'Before Meal')}</option>
+                              <option value="Empty Stomach">{t('doctor_dashboard.empty_stomach', 'Empty Stomach')}</option>
                             </select>
                           </div>
 
                           <div className="w-full md:w-24">
-                            <label className="block text-xs font-bold text-slate-500 mb-1">Days</label>
+                            <label className="block text-xs font-bold text-slate-500 mb-1">{t('doctor_dashboard.days', 'Days')}</label>
                             <input
                               type="number"
                               min="1"
                               required
                               value={row.days}
                               onChange={(e) => updatePrescriptionRow(row.id, 'days', e.target.value)}
-                              className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none text-center"
+                              className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none text-center font-bold"
                             />
                           </div>
 
                           {(() => {
                             const med = availableMedicines.find(m => m.id.toString() === row.medicineId?.toString());
                             const isOutOfStock = med && row.totalQuantity > med.availableQuantity;
+                            const stockStatus = isOutOfStock 
+                              ? <span className="text-rose-500 text-[10px] uppercase font-black">{t('doctor_dashboard.out_of_stock', 'Out of Stock')}</span> 
+                              : <span className="text-slate-400 text-[10px]">{med ? med.availableQuantity + ' ' + t('doctor_dashboard.left', 'left') : ''}</span>;
                             return (
-                              <div className={`w-full md:w-28 text-center py-2 rounded-lg border ${isOutOfStock ? 'bg-rose-50 border-rose-200' : 'bg-teal-50 border-teal-100'}`} title={isOutOfStock ? 'Exceeds available stock!' : ''}>
-                                <label className={`block text-[10px] font-black uppercase mb-0.5 ${isOutOfStock ? 'text-rose-600' : 'text-teal-600'}`}>Total Qty</label>
-                                <span className={`text-lg font-black ${isOutOfStock ? 'text-rose-600' : 'text-teal-800'}`}>
-                                  {row.totalQuantity} {isOutOfStock && <span className="text-sm">⚠️</span>}
-                                </span>
+                              <div className="w-full md:w-24 text-right pt-2 md:pt-0">
+                                <span className="block text-xs font-bold text-slate-400">{t('doctor_dashboard.qty', 'Qty:')}</span>
+                                <span className={`text-lg font-black ${isOutOfStock ? 'text-rose-600' : 'text-teal-600'}`}>{row.totalQuantity}</span>
+                                <div className="mt-1">{stockStatus}</div>
                               </div>
                             );
                           })()}
@@ -877,26 +878,25 @@ function DoctorDashboard({ user }) {
                 <div className="mt-6 pt-6 border-t border-slate-100">
                   <div className="flex justify-between items-center mb-2">
                     <div>
-                      <label className="block text-sm font-bold text-slate-600">External Medicines (Outside Pharmacy)</label>
-                      <p className="text-xs text-slate-400">These will be printed on the prescription note.</p>
+                      <label className="block text-sm font-bold text-amber-700">{t('doctor_dashboard.external_prescription', 'External Prescription (Buy Outside)')}</label>
                     </div>
                     <button 
                       type="button" 
                       onClick={addExternalMedicineRow}
-                      className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition"
+                      className="text-xs font-bold text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition"
                     >
-                      + Add External Medicine
+                      {t('doctor_dashboard.add_medicine', '+ Add Medicine')}
                     </button>
                   </div>
                   
                   {formData.externalMedicines.length === 0 ? (
                     <div className="p-4 border border-dashed border-slate-300 rounded-xl bg-slate-50 text-center text-sm font-medium text-slate-400">
-                      No external medicines added. Click "+ Add External Medicine".
+                      {t('doctor_dashboard.no_external_medicines', 'No external medicines added.')}
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {formData.externalMedicines.map((row, index) => (
-                        <div key={row.id} className="flex flex-wrap md:flex-nowrap gap-3 items-end p-3 border border-slate-200 rounded-xl bg-slate-50 relative">
+                      {formData.externalMedicines.map((row) => (
+                        <div key={row.id} className="flex flex-wrap md:flex-nowrap gap-3 items-end p-3 border border-amber-200 rounded-xl bg-amber-50/50 relative">
                           <button 
                             type="button" 
                             onClick={() => removeExternalMedicineRow(row.id)}
@@ -906,12 +906,12 @@ function DoctorDashboard({ user }) {
                           </button>
                           
                           <div className="flex-1 min-w-[200px]">
-                            <label className="block text-xs font-bold text-slate-500 mb-1">Medicine Name <span className="text-rose-500">*</span></label>
+                            <label className="block text-xs font-bold text-slate-500 mb-1">{t('doctor_dashboard.medicine_name', 'Medicine Name')} <span className="text-rose-500">*</span></label>
                             <input
                               type="text"
                               required
                               list="external-medicines-list"
-                              placeholder="e.g. Amoxicillin 500mg"
+                              placeholder={t('doctor_dashboard.med_placeholder', 'e.g. Amoxicillin 500mg')}
                               value={row.name}
                               onChange={(e) => updateExternalMedicineRow(row.id, 'name', e.target.value)}
                               className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
@@ -924,39 +924,36 @@ function DoctorDashboard({ user }) {
                           </div>
                           
                           <div className="w-full md:w-32">
-                            <label className="block text-xs font-bold text-slate-500 mb-1">Frequency</label>
-                            <input
-                              list={`ext-freq-list-${row.id}`}
-                              required
-                              value={row.frequency}
+                            <label className="block text-xs font-bold text-slate-500 mb-1">{t('doctor_dashboard.frequency', 'Frequency')}</label>
+                            <select 
+                              value={row.frequency} 
                               onChange={(e) => updateExternalMedicineRow(row.id, 'frequency', e.target.value)}
-                              placeholder="e.g. 8 Hourly"
-                              className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                            />
-                            <datalist id={`ext-freq-list-${row.id}`}>
-                              <option value="6 Hourly" />
-                              <option value="8 Hourly" />
-                              <option value="12 Hourly" />
-                              <option value="Morning Only" />
-                              <option value="Night Only" />
-                              <option value="Morning & Night" />
-                            </datalist>
+                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none text-sm font-bold"
+                            >
+                              <option value="6 Hourly">{t('doctor_dashboard.freq_6h', '6 Hourly (QID)')}</option>
+                              <option value="8 Hourly">{t('doctor_dashboard.freq_8h', '8 Hourly (TDS)')}</option>
+                              <option value="12 Hourly">{t('doctor_dashboard.freq_12h', '12 Hourly (BD)')}</option>
+                              <option value="Morning Only">{t('doctor_dashboard.freq_om', 'Morning Only (OM)')}</option>
+                              <option value="Night Only">{t('doctor_dashboard.freq_on', 'Night Only (ON)')}</option>
+                              <option value="Morning & Night">{t('doctor_dashboard.freq_bd', 'Morning & Night (BD)')}</option>
+                            </select>
                           </div>
 
                           <div className="w-full md:w-32">
-                            <label className="block text-xs font-bold text-slate-500 mb-1">Meal Timing</label>
+                            <label className="block text-xs font-bold text-slate-500 mb-1">{t('doctor_dashboard.meal_timing', 'Meal Timing')}</label>
                             <select
                               value={row.mealTiming || 'After Meal'}
                               onChange={(e) => updateExternalMedicineRow(row.id, 'mealTiming', e.target.value)}
                               className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none font-bold text-indigo-700"
                             >
-                              <option value="After Meal">After Meal</option>
-                              <option value="Before Meal">Before Meal</option>
+                              <option value="After Meal">{t('doctor_dashboard.after_meal', 'After Meal')}</option>
+                              <option value="Before Meal">{t('doctor_dashboard.before_meal', 'Before Meal')}</option>
+                              <option value="Empty Stomach">{t('doctor_dashboard.empty_stomach', 'Empty Stomach')}</option>
                             </select>
                           </div>
 
                           <div className="w-full md:w-24">
-                            <label className="block text-xs font-bold text-slate-500 mb-1">Days</label>
+                            <label className="block text-xs font-bold text-slate-500 mb-1">{t('doctor_dashboard.days', 'Days')}</label>
                             <input
                               type="number"
                               min="1"
@@ -973,10 +970,10 @@ function DoctorDashboard({ user }) {
                 </div>
 
                 <div className="pt-3 border-t border-slate-100">
-                  <label className="block text-sm font-bold text-slate-600 mb-1">Doctor's Notes</label>
+                  <label className="block text-sm font-bold text-slate-600 mb-1">{t('doctor_dashboard.notes', 'Doctor\'s Notes')}</label>
                   <textarea
                     rows="2"
-                    placeholder="Any additional remarks..."
+                    placeholder={t('doctor_dashboard.notes_placeholder', 'Any additional remarks...')}
                     value={formData.notes}
                     onChange={e => setFormData({...formData, notes: e.target.value})}
                     className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none text-sm custom-scrollbar"
@@ -989,7 +986,7 @@ function DoctorDashboard({ user }) {
                     onClick={printPrescription}
                     className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl transition shadow-md shadow-indigo-600/20 active:scale-95 flex items-center justify-center gap-2"
                   >
-                    <span>🖨️</span> Print Prescription
+                    <span>🖨️</span> {t('doctor_dashboard.print_current_prescription', 'Print Prescription')}
                   </button>
 
                   <button
@@ -997,7 +994,7 @@ function DoctorDashboard({ user }) {
                     disabled={loading}
                     className="px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white font-black rounded-xl transition shadow-md shadow-teal-600/20 disabled:bg-slate-400 active:scale-95 flex items-center justify-center"
                   >
-                    {loading ? 'Saving...' : 'Save Record ✅'}
+                    {loading ? t('doctor_dashboard.saving', 'Saving...') : t('doctor_dashboard.save_and_print', 'Save Record ✅')}
                   </button>
                 </div>
               </form>
@@ -1005,11 +1002,11 @@ function DoctorDashboard({ user }) {
 
             {/* Past Records List */}
             <div>
-              <h4 className="text-sm font-bold text-slate-500 mb-3 uppercase tracking-wider">Past Consultation History</h4>
+              <h4 className="text-sm font-bold text-slate-500 mb-3 uppercase tracking-wider">{t('doctor_dashboard.past_medical_records', 'Past Consultation History')}</h4>
               <div className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
                 {records.length === 0 ? (
                   <div className="py-8 text-center text-slate-400 font-medium bg-white rounded-xl border border-dashed border-slate-300">
-                    No past medical records found for {currentlyTreating.patientName}.
+                    {t('doctor_dashboard.no_past_records', 'No past medical records found for this patient.')}
                   </div>
                 ) : (
                   records.map(record => (
@@ -1028,16 +1025,16 @@ function DoctorDashboard({ user }) {
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mt-4">
                         <div className="bg-teal-50 p-3 rounded-lg border border-teal-100">
-                          <span className="block font-bold text-teal-700 mb-1 text-xs uppercase tracking-wider">Pharmacy Medicines:</span>
+                          <span className="block font-bold text-teal-700 mb-1 text-xs uppercase tracking-wider">{t('doctor_dashboard.smart_prescription', 'Pharmacy Medicines')}:</span>
                           <p className="text-teal-900 font-medium">{formatPharmacyMedsForDisplay(record.pharmacyMedicines)}</p>
                         </div>
                         <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-200">
-                          <span className="block font-bold text-indigo-700 mb-1 text-xs uppercase tracking-wider">External Medicines:</span>
+                          <span className="block font-bold text-indigo-700 mb-1 text-xs uppercase tracking-wider">{t('doctor_dashboard.external_prescription', 'External Medicines')}:</span>
                           <p className="text-indigo-900 font-medium">{formatPharmacyMedsForDisplay(record.externalMedicines)}</p>
                         </div>
                         {record.notes && (
                           <div className="md:col-span-2 bg-amber-50 p-3 rounded-lg border border-amber-100">
-                            <span className="block font-bold text-amber-700 mb-1 text-xs uppercase tracking-wider">Doctor's Notes:</span>
+                            <span className="block font-bold text-amber-700 mb-1 text-xs uppercase tracking-wider">{t('doctor_dashboard.notes', 'Doctor\'s Notes')}:</span>
                             <p className="text-amber-900 font-medium">{record.notes}</p>
                           </div>
                         )}

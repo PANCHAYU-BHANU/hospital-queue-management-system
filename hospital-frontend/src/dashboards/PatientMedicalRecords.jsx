@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
+import { useTranslation } from 'react-i18next';
 
 function PatientMedicalRecords({ user }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchRecords = async () => {
@@ -44,7 +46,7 @@ function PatientMedicalRecords({ user }) {
     const pharmacyHtmlContent = formatMeds(record.pharmacyMedicines);
     const pharmacyHtml = pharmacyHtmlContent 
       ? `<div style="text-align: left; background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-           <strong style="color: #475569;">Pharmacy Medicines:</strong>
+           <strong style="color: #475569;">${t('patient_medical_records.swal_pharmacy_medicines', 'Pharmacy Medicines')}:</strong>
            <ul style="margin: 5px 0 0 20px; color: #0f172a; list-style-type: disc;">${pharmacyHtmlContent}</ul>
          </div>`
       : '';
@@ -52,14 +54,14 @@ function PatientMedicalRecords({ user }) {
     const externalHtmlContent = formatMeds(record.externalMedicines);
     const externalHtml = externalHtmlContent 
       ? `<div style="text-align: left; background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-           <strong style="color: #475569;">External Medicines:</strong>
+           <strong style="color: #475569;">${t('patient_medical_records.swal_external_medicines', 'External Medicines')}:</strong>
            <ul style="margin: 5px 0 0 20px; color: #0f172a; list-style-type: disc;">${externalHtmlContent}</ul>
          </div>`
       : '';
 
     const notesHtml = record.notes 
       ? `<div style="text-align: left; background: #fffbeb; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-           <strong style="color: #b45309;">Doctor's Notes:</strong>
+           <strong style="color: #b45309;">${t('patient_medical_records.swal_doctors_notes', "Doctor's Notes")}:</strong>
            <p style="margin: 5px 0 0 0; color: #78350f;">${record.notes}</p>
          </div>`
       : '';
@@ -69,39 +71,39 @@ function PatientMedicalRecords({ user }) {
       html: `
         <div style="font-size: 14px; text-align: left;">
           <p style="color: #64748b; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
-            <strong>Date:</strong> ${new Date(record.createdAt).toLocaleDateString()} <br/>
-            <strong>Doctor:</strong> Dr. ${record.doctorName} <br/>
-            <strong>Hospital:</strong> ${record.hospitalName} <br/>
-            <strong>Your Age:</strong> ${record.patientAgeAtConsultation}
+            <strong>${t('patient_medical_records.swal_date', 'Date')}:</strong> ${new Date(record.createdAt).toLocaleDateString()} <br/>
+            <strong>${t('patient_medical_records.swal_doctor', 'Doctor')}:</strong> Dr. ${record.doctorName} <br/>
+            <strong>${t('patient_medical_records.swal_hospital', 'Hospital')}:</strong> ${record.hospitalName} <br/>
+            <strong>${t('patient_medical_records.swal_your_age', 'Your Age')}:</strong> ${record.patientAgeAtConsultation}
           </p>
           ${pharmacyHtml}
           ${externalHtml}
           ${notesHtml}
-          ${!pharmacyHtml && !externalHtml ? '<p style="color: #94a3b8; text-align: center;">No medicines prescribed.</p>' : ''}
+          ${!pharmacyHtml && !externalHtml ? `<p style="color: #94a3b8; text-align: center;">${t('patient_medical_records.swal_no_medicines', 'No medicines prescribed.')}</p>` : ''}
         </div>
       `,
       confirmButtonColor: '#0d9488',
-      confirmButtonText: 'Close',
+      confirmButtonText: t('patient_medical_records.swal_close', 'Close'),
       width: '500px'
     });
   };
 
   if (loading) {
-    return <div className="p-12 text-center text-slate-500 font-bold">Loading your medical history...</div>;
+    return <div className="p-12 text-center text-slate-500 font-bold">{t('patient_medical_records.loading', 'Loading your medical history...')}</div>;
   }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <h2 className="text-2xl font-black text-slate-800">📁 My Medical Records</h2>
-        <p className="text-slate-500 mt-1">View your past consultation history, diagnosis, and prescriptions.</p>
+        <h2 className="text-2xl font-black text-slate-800">{t('patient_medical_records.title', '📁 My Medical Records')}</h2>
+        <p className="text-slate-500 mt-1">{t('patient_medical_records.subtitle', 'View your past consultation history, diagnosis, and prescriptions.')}</p>
       </div>
 
       {records.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
           <span className="text-6xl mb-4 block">📋</span>
-          <h3 className="text-xl font-bold text-slate-700">No Records Found</h3>
-          <p className="text-slate-500 mt-2">You don't have any past medical records yet.</p>
+          <h3 className="text-xl font-bold text-slate-700">{t('patient_medical_records.no_records_title', 'No Records Found')}</h3>
+          <p className="text-slate-500 mt-2">{t('patient_medical_records.no_records_desc', "You don't have any past medical records yet.")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -132,7 +134,7 @@ function PatientMedicalRecords({ user }) {
               </div>
 
               <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end text-teal-600 text-sm font-bold opacity-0 group-hover:opacity-100 transition">
-                View Details →
+                {t('patient_medical_records.view_details', 'View Details →')}
               </div>
             </div>
           ))}

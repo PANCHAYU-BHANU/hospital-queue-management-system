@@ -10,4 +10,5 @@ import java.util.List;
 public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, Long> {
     List<MedicalRecord> findByPatient_IdOrderByCreatedAtDesc(Long patientId);
     List<MedicalRecord> findByPatient_User_NicNumberOrderByCreatedAtDesc(String nicNumber);
+    List<MedicalRecord> findByCreatedAtBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
 }

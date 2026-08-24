@@ -11,7 +11,7 @@ import java.util.List;
 @Repository
 public interface QueueRepository extends JpaRepository<Queue, Long> {
 
-    // ◄ මෙන්න මේ මෙතඩ් එකේ @Query එකයි parameters දෙකයි හරියටම මෙහෙම හදන්න මචන්:
+    // ◄ මෙන්න මේ මෙතඩ් එකේ @Query එකයි parameters දෙකයි හරියටම මෙහෙම හදන්න:
     @Query("SELECT COALESCE(MAX(q.tokenNumber), 0) FROM Queue q WHERE q.doctor.id = :doctorId AND q.status != 'REJECTED' AND CAST(q.createdAt AS date) = CURRENT_DATE")
     int findMaxTokenNumberForToday(@Param("doctorId") Long doctorId);
 
@@ -52,4 +52,6 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
 
     @Query("SELECT q FROM Queue q WHERE q.hospital.id = :hospitalId AND q.status = 'PENDING_PAYMENT' AND CAST(q.createdAt AS date) = CURRENT_DATE ORDER BY q.consultationEndTime ASC")
     List<Queue> findPendingPayments(@Param("hospitalId") Long hospitalId);
+
+    List<Queue> findByCreatedAtBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
 }
