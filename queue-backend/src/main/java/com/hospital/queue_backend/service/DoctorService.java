@@ -251,8 +251,17 @@ public class DoctorService {
                         .parseCaseInsensitive()
                         .appendPattern("h:mm a")
                         .toFormatter(java.util.Locale.ENGLISH);
+                java.time.LocalTime startTime = java.time.LocalTime.parse(parts[0].trim(), formatter);
                 java.time.LocalTime endTime = java.time.LocalTime.parse(parts[1].trim(), formatter);
-                return java.time.LocalTime.now().isBefore(endTime);
+                java.time.LocalTime now = java.time.LocalTime.now();
+
+                if (endTime.isBefore(startTime) || endTime.equals(java.time.LocalTime.MIDNIGHT)) {
+                    // Shift crosses midnight
+                    return !now.isBefore(startTime) || now.isBefore(endTime);
+                } else {
+                    // Normal shift
+                    return !now.isBefore(startTime) && now.isBefore(endTime);
+                }
             }
         } catch (Exception e) {
             System.err.println("Error parsing time period: " + timePeriod);

@@ -24,6 +24,9 @@ function PublicDashboard({ onBackToLogin }) {
   const [doctorQueueData, setDoctorQueueData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isFetchingDoctors, setIsFetchingDoctors] = useState(false);
+
+  const isOpdClosed = selectedHospital && !isFetchingDoctors && doctors.length === 0;
 
   useEffect(() => {
     fetchHospitals();
@@ -46,6 +49,7 @@ function PublicDashboard({ onBackToLogin }) {
     const hId = e.target.value;
     setSelectedHospital(hId);
     if (hId) {
+      setIsFetchingDoctors(true);
       try {
         const res = await fetch(`http://localhost:8080/api/doctors/hospital/${hId}`);
         if (res.ok) {
@@ -57,6 +61,8 @@ function PublicDashboard({ onBackToLogin }) {
         }
       } catch (err) {
         console.error(err);
+      } finally {
+        setIsFetchingDoctors(false);
       }
     } else {
       setDoctors([]);
@@ -120,6 +126,20 @@ function PublicDashboard({ onBackToLogin }) {
       </header>
       
       <main className="flex-1 p-8 max-w-3xl mx-auto w-full">
+        {isOpdClosed && (
+          <div className="mb-6 p-6 bg-rose-50 rounded-2xl border border-rose-200 flex items-start gap-4 shadow-sm animate-pulse">
+            <div className="text-rose-500 bg-white p-3 rounded-full shadow-sm">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-rose-800 mb-1">{t('public_dashboard.opd_closed')}</h3>
+              <p className="text-rose-600 font-medium">{t('public_dashboard.opd_closed_desc')}</p>
+            </div>
+          </div>
+        )}
+        
         <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
           <div>
             <label className="block text-sm font-bold uppercase text-slate-400 mb-2">{t('public_dashboard.select_hospital')}</label>

@@ -26,7 +26,9 @@
     "normal_queue": "Normal Queue",
     "priority_queue": "Priority Queue",
     "total_waiting": "Total Waiting",
-    "estimated_wait_time": "Estimated Wait Time"
+    "estimated_wait_time": "Estimated Wait Time",
+    "opd_closed": "OPD is Currently Closed",
+    "opd_closed_desc": "The OPD is closed at this time. Please check back during operating hours."
   },
   "patient_dashboard": {
     "error_no_user_id": "User ID not found! Please log in again.",

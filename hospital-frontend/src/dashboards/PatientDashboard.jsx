@@ -23,6 +23,9 @@ function PatientDashboard({ user }) {
   // Doctors states
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
+  const [isFetchingDoctors, setIsFetchingDoctors] = useState(false);
+  
+  const isOpdClosed = selectedHospitalId && !isFetchingDoctors && doctors.length === 0;
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -110,6 +113,7 @@ function PatientDashboard({ user }) {
   };
 
   const fetchDoctors = async (hospitalId) => {
+    setIsFetchingDoctors(true);
     try {
       const res = await fetch(`http://localhost:8080/api/doctors/hospital/${hospitalId}`);
       if (res.ok) {
@@ -124,6 +128,8 @@ function PatientDashboard({ user }) {
       }
     } catch (err) {
       console.error("Failed to fetch doctors:", err);
+    } finally {
+      setIsFetchingDoctors(false);
     }
   };
 
@@ -327,6 +333,20 @@ function PatientDashboard({ user }) {
           <span className="text-2xl">➕</span>
           <h3 className="text-2xl font-black text-slate-800">{t('patient_dashboard.request_new_token', 'Request New Token')}</h3>
         </div>
+
+        {isOpdClosed && (
+          <div className="p-6 bg-rose-50 rounded-2xl border border-rose-200 flex items-start gap-4 shadow-sm animate-pulse">
+            <div className="text-rose-500 bg-white p-3 rounded-full shadow-sm flex-shrink-0">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-rose-800 mb-1">{t('public_dashboard.opd_closed', 'OPD is Currently Closed')}</h3>
+              <p className="text-xs text-rose-600 font-medium">{t('public_dashboard.opd_closed_desc', 'The OPD is closed at this time. Please check back during operating hours.')}</p>
+            </div>
+          </div>
+        )}
 
         {/* ERROR MESSAGE DISPLAY */}
         {error && (

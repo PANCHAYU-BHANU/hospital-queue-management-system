@@ -26,7 +26,9 @@
     "normal_queue": "සාමාන්‍ය පෝලිම",
     "priority_queue": "ප්‍රමුඛතා පෝලිම",
     "total_waiting": "මුළු රැඳී සිටින ගණන",
-    "estimated_wait_time": "ඇස්තමේන්තුගත රැඳී සිටින කාලය"
+    "estimated_wait_time": "ඇස්තමේන්තුගත රැඳී සිටින කාලය",
+    "opd_closed": "OPD අංශය මේ වන විට වසා ඇත",
+    "opd_closed_desc": "මේ වෙලාවේදී OPD අංශය වසා ඇත. කරුණාකර සායන වේලාවන්හිදී නැවත පරීක්ෂා කරන්න."
   },
   "sidebar": {
     "get_token": "ටෝකන් ලබාගන්න",
