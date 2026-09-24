@@ -138,6 +138,27 @@ function CommunicationDashboard({ user }) {
       
       if (res.ok) {
         const ticket = await res.json();
+        
+        // Build printable token HTML
+        const priorityIndicator = isSpecialNeed ? 'P' : 'N';
+        const printContent = `
+          <div style="font-family: monospace; text-align: center; width: 300px; padding: 20px; border: 1px dashed #000;">
+            <h2 style="margin: 0; font-size: 24px;">HOSPITAL QUEUE</h2>
+            <p style="margin: 5px 0;">Token Receipt</p>
+            <hr style="border: 1px dashed #000;" />
+            <h1 style="font-size: 48px; margin: 10px 0;">${ticket.tokenNumber}</h1>
+            <h1 style="font-size: 64px; margin: 10px 0; font-weight: 900;">${priorityIndicator}</h1>
+            <hr style="border: 1px dashed #000;" />
+            <p style="margin: 5px 0; text-align: left;"><strong>Name:</strong> ${ticket.patientName || 'N/A'}</p>
+            <p style="margin: 5px 0; text-align: left;"><strong>NIC:</strong> ${ticket.patientNic || 'N/A'}</p>
+            <p style="margin: 5px 0; text-align: left;"><strong>Doctor:</strong> ${ticket.doctorName || 'N/A'}</p>
+            <p style="margin: 5px 0; text-align: left;"><strong>Room:</strong> ${ticket.roomNumber || 'N/A'}</p>
+            <p style="margin: 5px 0; text-align: left;"><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+            <hr style="border: 1px dashed #000;" />
+            <p style="font-size: 12px;">Please wait for your number.</p>
+          </div>
+        `;
+
         Swal.fire({
           title: t('communication_dashboard.token_generated_title', 'Token Generated!'),
           html: `
@@ -149,8 +170,28 @@ function CommunicationDashboard({ user }) {
             </div>
             <p class="mt-4 text-sm text-slate-500">${t('communication_dashboard.provide_ticket_msg', 'Please provide this ticket number to the patient.')}</p>
           `,
-          icon: 'success'
+          icon: 'success',
+          showCancelButton: true,
+          confirmButtonText: 'Print Token',
+          cancelButtonText: 'Close',
+          confirmButtonColor: '#0d9488',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            const printWindow = window.open('', '_blank', 'width=400,height=600');
+            printWindow.document.write(`
+              <html>
+                <head>
+                  <title>Print Token</title>
+                </head>
+                <body onload="window.print(); window.close();">
+                  ${printContent}
+                </body>
+              </html>
+            `);
+            printWindow.document.close();
+          }
         });
+
         // Reset patient context after generation
         setVerifiedPatient(null);
         setPatientId(null);
