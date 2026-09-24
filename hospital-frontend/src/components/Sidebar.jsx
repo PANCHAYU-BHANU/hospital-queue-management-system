@@ -14,8 +14,7 @@ function Sidebar({ role, fullName, onLogout, activeTab, setActiveTab }) {
           { name: 'Manage Counters', label: t('sidebar.manage_counters', 'Manage Counters'), icon: '🧑‍💻' },
           { name: 'Manage Communication Centers', label: t('sidebar.manage_comm_centers', 'Manage Comm Centers'), icon: '📞' },
           { name: 'Manage OPD Rooms', label: t('sidebar.manage_opd', 'Manage OPD Rooms'), icon: '🚪' },
-          { name: 'Manage Pharmacists', label: t('sidebar.manage_pharmacists', 'Manage Pharmacists'), icon: '💊' },
-          { name: 'Hospital Settings', label: t('sidebar.hospital_settings', 'Hospital Settings'), icon: '⚙️' }
+          { name: 'Manage Pharmacists', label: t('sidebar.manage_pharmacists', 'Manage Pharmacists'), icon: '💊' }
         ];
       case 'DOCTOR':
         return [

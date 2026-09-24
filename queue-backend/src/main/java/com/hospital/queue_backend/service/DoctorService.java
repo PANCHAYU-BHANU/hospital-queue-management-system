@@ -217,7 +217,8 @@ public class DoctorService {
                         getRoomNameForDoctor(doctor.getId()),
                         doctor.isAvailable(),
                         doctor.getUser().getNicNumber(),
-                        doctor.getUser().getPhoneNumber()))
+                        doctor.getUser().getPhoneNumber(),
+                        isDoctorShiftActive(doctor)))
                 .collect(java.util.stream.Collectors.toList());
     }
 
@@ -226,7 +227,6 @@ public class DoctorService {
             Long hospitalId) {
         doctorAssignmentRepository.deleteByAssignedDateBefore(java.time.LocalDate.now());
         return doctorRepository.findByHospital_Id(hospitalId).stream()
-                .filter(this::isDoctorShiftActive)
                 .map(doctor -> new com.hospital.queue_backend.dto.response.DoctorResponse(
                         doctor.getId(),
                         doctor.getDoctorName(),
@@ -234,7 +234,8 @@ public class DoctorService {
                         getRoomNameForDoctor(doctor.getId()),
                         doctor.isAvailable(),
                         doctor.getUser().getNicNumber(),
-                        doctor.getUser().getPhoneNumber()))
+                        doctor.getUser().getPhoneNumber(),
+                        isDoctorShiftActive(doctor)))
                 .collect(java.util.stream.Collectors.toList());
     }
 

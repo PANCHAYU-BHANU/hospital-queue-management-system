@@ -288,9 +288,20 @@ function SuperAdminDashboard({ activeTab }) {
     ) : null;
   }
 
+  const validateNIC = (nic) => {
+    return /^[0-9]{9}[vVxX]$/.test(nic) || /^[0-9]{12}$/.test(nic);
+  };
+
   const handleAddAdmin = async (e) => {
     e.preventDefault();
     setALoading(true);
+
+    if (!validateNIC(adminForm.nicNumber)) {
+      showMessage(t('super_admin_dashboard.invalid_nic', 'Invalid NIC Number. Please enter a valid Sri Lankan NIC.'), true);
+      setALoading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/superadmin/register-admin', {
         method: 'POST',
@@ -329,16 +340,21 @@ function SuperAdminDashboard({ activeTab }) {
       confirmButtonText: t('super_admin_dashboard.update', 'Update'),
       confirmButtonColor: '#0d9488',
       preConfirm: () => {
-        return {
+        const result = {
           fullName: document.getElementById('swal-fullName').value,
           hospitalId: document.getElementById('swal-hospitalId').value,
           nicNumber: document.getElementById('swal-nicNumber').value,
           phoneNumber: document.getElementById('swal-phoneNumber').value,
           password: document.getElementById('swal-password').value
+        };
+        if (!validateNIC(result.nicNumber)) {
+          Swal.showValidationMessage(t('super_admin_dashboard.invalid_nic', 'Invalid NIC Number.'));
+          return false;
         }
+        return result;
       }
     }).then(async (result) => {
-      if (result.isConfirmed) {
+      if (result.isConfirmed && result.value) {
         try {
           const response = await fetch(`/api/superadmin/update/${admin.id}`, {
             method: 'PUT',

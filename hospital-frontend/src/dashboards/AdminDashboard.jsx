@@ -110,10 +110,25 @@ function AdminDashboard({ user, activeTab }) {
     }
   };
 
+  const validateNIC = (nic) => {
+    return /^[0-9]{9}[vVxX]$/.test(nic) || /^[0-9]{12}$/.test(nic);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // Validate NIC
+    const currentNIC = activeTab === 'Manage Counters' || activeTab === 'Manage Communication Centers' 
+      ? counterFormData.nicNumber 
+      : formData.nicNumber;
+      
+    if (!validateNIC(currentNIC)) {
+      setError(t('admin_dashboard.invalid_nic', 'Invalid NIC Number. Please enter a valid Sri Lankan NIC.'));
+      setLoading(false);
+      return;
+    }
 
     try {
       if (activeTab === 'Manage Counters') {
@@ -332,16 +347,21 @@ function AdminDashboard({ user, activeTab }) {
       confirmButtonText: 'Update',
       confirmButtonColor: '#0d9488',
       preConfirm: () => {
-        return {
+        const result = {
           fullName: document.getElementById('swal-fullName').value,
           counterNumber: document.getElementById('swal-counterNumber').value,
           nicNumber: document.getElementById('swal-nicNumber').value,
           phoneNumber: document.getElementById('swal-phoneNumber').value,
           password: document.getElementById('swal-password').value
+        };
+        if (!validateNIC(result.nicNumber)) {
+          Swal.showValidationMessage(t('admin_dashboard.invalid_nic', 'Invalid NIC Number.'));
+          return false;
         }
+        return result;
       }
     }).then(async (result) => {
-      if (result.isConfirmed) {
+      if (result.isConfirmed && result.value) {
         try {
           const response = await fetch(`/api/counters/update/${counter.id}`, {
             method: 'PUT',
@@ -423,17 +443,22 @@ function AdminDashboard({ user, activeTab }) {
       confirmButtonText: 'Update',
       confirmButtonColor: '#0d9488',
       preConfirm: () => {
-        return {
+        const result = {
           doctorName: document.getElementById('swal-docName').value,
           specialization: document.getElementById('swal-docSpec').value,
           nicNumber: document.getElementById('swal-docNic').value,
           phoneNumber: document.getElementById('swal-docPhone').value,
           password: document.getElementById('swal-docPass').value,
           isAvailable: document.getElementById('swal-docAvail').value === 'true'
+        };
+        if (!validateNIC(result.nicNumber)) {
+          Swal.showValidationMessage(t('admin_dashboard.invalid_nic', 'Invalid NIC Number.'));
+          return false;
         }
+        return result;
       }
     }).then(async (result) => {
-      if (result.isConfirmed) {
+      if (result.isConfirmed && result.value) {
         try {
           const response = await fetch(`/api/doctors/update/${doc.id}`, {
             method: 'PUT',

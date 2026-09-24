@@ -17,4 +17,5 @@ public class DoctorResponse {
     private boolean isAvailable;
     private String nicNumber;
     private String phoneNumber;
+    private boolean activeShift;
 }

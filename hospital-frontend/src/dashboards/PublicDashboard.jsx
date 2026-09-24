@@ -54,7 +54,7 @@ function PublicDashboard({ onBackToLogin }) {
         const res = await fetch(`/api/doctors/hospital/${hId}`);
         if (res.ok) {
           const data = await res.json();
-          const availableDoctors = data.filter(doc => doc.available && doc.roomNumber !== "Unassigned");
+          const availableDoctors = data.filter(doc => doc.available && doc.activeShift && doc.roomNumber !== "Unassigned");
           setDoctors(availableDoctors);
           if (availableDoctors.length > 0) setSelectedDoctorId(availableDoctors[0].id);
           else setSelectedDoctorId('');
