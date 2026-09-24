@@ -645,6 +645,9 @@ function AdminDashboard({ user, activeTab }) {
                   value={counterFormData.nicNumber}
                   onChange={(e) => setCounterFormData({...counterFormData, nicNumber: e.target.value})}
                 />
+                {counterFormData.nicNumber && !validateNIC(counterFormData.nicNumber) && (
+                  <p className="text-xs font-bold text-rose-500 mt-1">⚠️ Invalid NIC Format</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -712,6 +715,9 @@ function AdminDashboard({ user, activeTab }) {
                   value={formData.nicNumber}
                   onChange={(e) => setFormData({...formData, nicNumber: e.target.value})}
                 />
+                {formData.nicNumber && !validateNIC(formData.nicNumber) && (
+                  <p className="text-xs font-bold text-rose-500 mt-1">⚠️ Invalid NIC Format</p>
+                )}
               </div>
 
               <div className="space-y-2">

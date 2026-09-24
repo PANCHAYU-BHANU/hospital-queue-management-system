@@ -15,19 +15,33 @@ function Register({ onSwitchToLogin }) {
   });
   
   const [loading, setLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false); // ◄ Custom Success එක පෙන්වන්න
-  const [phoneError, setPhoneError] = useState('');   // ◄ Phone Validation Error එකට
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
+  const [nicError, setNicError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   // 📝 NIC Parser Logic
   useEffect(() => {
     const nic = formData.nicNumber.trim();
-    if (nic.length === 9 || nic.length === 12) {
+    if (nic === '') {
+      setNicError('');
+      return;
+    }
+
+    const isValid = /^[0-9]{9}[vVxX]$/.test(nic) || /^[0-9]{12}$/.test(nic);
+    if (!isValid) {
+      setNicError(t('register.invalid_nic', 'Invalid NIC format'));
+      return;
+    } else {
+      setNicError('');
+    }
+
+    if (nic.length === 10 || nic.length === 12) {
       let year = "";
       let days = 0;
       let gender = "MALE";
 
-      if (nic.length === 9 && !isNaN(nic.substring(0, 2))) {
+      if (nic.length === 10 && !isNaN(nic.substring(0, 2))) {
         year = "19" + nic.substring(0, 2);
         days = parseInt(nic.substring(2, 5));
       } 
@@ -54,7 +68,7 @@ function Register({ onSwitchToLogin }) {
         }));
       }
     }
-  }, [formData.nicNumber]);
+  }, [formData.nicNumber, t]);
 
   // 📞 Phone Number Validation Logic (Live Checking)
   useEffect(() => {
@@ -163,8 +177,15 @@ function Register({ onSwitchToLogin }) {
                     value={formData.nicNumber}
                     onChange={handleChange}
                     placeholder={t('register.nic_placeholder', 'eg: 20010920...')}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-slate-50 transition font-medium text-slate-700 text-sm"
+                    className={`w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 bg-slate-50 transition font-medium text-slate-700 text-sm ${
+                      nicError ? 'border-red-400 focus:ring-red-400' : 'border-slate-200 focus:ring-teal-500'
+                    }`}
                   />
+                  {nicError && (
+                    <p className="text-[11px] text-red-500 font-bold mt-1">
+                      {nicError}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block mb-1 text-xs font-bold tracking-wider uppercase text-slate-400">{t('register.phone_number', 'Phone Number')}</label>
@@ -236,7 +257,7 @@ function Register({ onSwitchToLogin }) {
 
               <button
                 type="submit"
-                disabled={loading || !!phoneError}
+                disabled={loading || !!phoneError || !!nicError}
                 className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-lg transition transform active:scale-[0.99] disabled:bg-slate-300 text-sm"
               >
                 {loading ? t('register.registering', 'Registering...') : t('register.register_account', 'Register Account 🚀')}

@@ -6,8 +6,9 @@ services:
     container_name: hospital_queue_db
     restart: always
     environment:
-      MYSQL_DATABASE: hospital_queue_db
-      MYSQL_ROOT_PASSWORD: 1234
+      - TZ=Asia/Colombo
+      - MYSQL_DATABASE=hospital_queue_db
+      - MYSQL_ROOT_PASSWORD=1234
     ports:
       - "3307:3306"
     volumes:
@@ -22,7 +23,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/hospital_queue_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - TZ=Asia/Colombo
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/hospital_queue_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=Asia/Colombo&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=1234
     depends_on:

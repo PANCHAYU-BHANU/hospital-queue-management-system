@@ -601,6 +601,9 @@ function SuperAdminDashboard({ activeTab }) {
                 <div>
                   <label className="text-xs font-bold uppercase text-slate-400">{t('super_admin_dashboard.nic_number', 'NIC Number')}</label>
                   <input required type="text" value={adminForm.nicNumber} onChange={e => setAdminForm({...adminForm, nicNumber: e.target.value})} className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50 focus:ring-teal-500 outline-none" placeholder={t('super_admin_dashboard.nic', 'NIC')} />
+                  {adminForm.nicNumber && !validateNIC(adminForm.nicNumber) && (
+                    <p className="text-xs font-bold text-rose-500 mt-1">⚠️ Invalid NIC Format</p>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs font-bold uppercase text-slate-400">{t('super_admin_dashboard.phone_number', 'Phone')}</label>
