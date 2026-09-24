@@ -49,7 +49,7 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
 
   const fetchMedicines = async (hospitalId) => {
     try {
-      const res = await fetch(`http://localhost:8080/api/medicines/hospital/${hospitalId}`);
+      const res = await fetch(`/api/medicines/hospital/${hospitalId}`);
       if (res.ok) {
         const data = await res.json();
         setMedicines(data);
@@ -61,8 +61,8 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
 
   const fetchPharmacyQueue = async () => {
     try {
-      const res1 = await fetch(`http://localhost:8080/api/queue/pharmacy-queue/${hospitalId}`);
-      const res2 = await fetch(`http://localhost:8080/api/queue/pending-payments/${hospitalId}`);
+      const res1 = await fetch(`/api/queue/pharmacy-queue/${hospitalId}`);
+      const res2 = await fetch(`/api/queue/pending-payments/${hospitalId}`);
       
       let data = [];
       if (res1.ok) {
@@ -80,7 +80,7 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
           try {
              // To get the medicines, we fetch the medical records of the patient.
              // We just need the most recent one.
-             const recordsRes = await fetch(`http://localhost:8080/api/medical-records/search?nic=${queueItem.patientNic}`);
+             const recordsRes = await fetch(`/api/medical-records/search?nic=${queueItem.patientNic}`);
              if (recordsRes.ok) {
                 const records = await recordsRes.json();
                 if (records && records.length > 0) {
@@ -104,7 +104,7 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
     setLoading(true);
 
     try {
-      const res = await fetch(`http://localhost:8080/api/medicines/hospital/${hospitalId}`, {
+      const res = await fetch(`/api/medicines/hospital/${hospitalId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -148,7 +148,7 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
       }
 
       try {
-        const res = await fetch(`http://localhost:8080/api/medicines/${medicineId}/stock`, {
+        const res = await fetch(`/api/medicines/${medicineId}/stock`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ quantityToAdd: qty })
@@ -169,7 +169,7 @@ function PharmacistDashboard({ user, activeTab: propTab }) {
   const handlePackAndComplete = async (queueId) => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8080/api/queue/pharmacy-complete/${queueId}`, {
+      const res = await fetch(`/api/queue/pharmacy-complete/${queueId}`, {
         method: 'PUT'
       });
       if (res.ok) {

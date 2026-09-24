@@ -10,7 +10,7 @@ function PatientMedicalRecords({ user }) {
   useEffect(() => {
     const fetchRecords = async () => {
       try {
-        const res = await fetch(`http://localhost:8080/api/medical-records/search?nic=${user.nicNumber}`);
+        const res = await fetch(`/api/medical-records/search?nic=${user.nicNumber}`);
         if (res.ok) {
           const data = await res.json();
           setRecords(data);

@@ -34,7 +34,7 @@ function PublicDashboard({ onBackToLogin }) {
 
   const fetchHospitals = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/hospital/all');
+      const res = await fetch('/api/hospital/all');
       const data = await res.json();
       setHospitals(data);
       if (data.length > 0) {
@@ -51,7 +51,7 @@ function PublicDashboard({ onBackToLogin }) {
     if (hId) {
       setIsFetchingDoctors(true);
       try {
-        const res = await fetch(`http://localhost:8080/api/doctors/hospital/${hId}`);
+        const res = await fetch(`/api/doctors/hospital/${hId}`);
         if (res.ok) {
           const data = await res.json();
           const availableDoctors = data.filter(doc => doc.available && doc.roomNumber !== "Unassigned");
@@ -81,11 +81,11 @@ function PublicDashboard({ onBackToLogin }) {
     
     try {
       // Get estimated wait time
-      const waitRes = await fetch(`http://localhost:8080/api/queue/estimate-wait-time/${selectedDoctorId}`);
+      const waitRes = await fetch(`/api/queue/estimate-wait-time/${selectedDoctorId}`);
       const waitText = await waitRes.text();
 
       // Get current queue
-      const queueRes = await fetch(`http://localhost:8080/api/queue/doctor/${selectedDoctorId}`);
+      const queueRes = await fetch(`/api/queue/doctor/${selectedDoctorId}`);
       const queueData = await queueRes.json();
       
       const pendingNormalCount = queueData.filter(q => q.status === 'PENDING' && q.queueType === 'NORMAL').length;

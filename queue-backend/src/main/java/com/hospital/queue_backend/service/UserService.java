@@ -29,6 +29,7 @@ public class UserService  {
     private final PharmacistRepository pharmacistRepository;
     private final com.hospital.queue_backend.repository.DoctorAssignmentRepository doctorAssignmentRepository;
     private final com.hospital.queue_backend.repository.CommunicationCenterRepository communicationCenterRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     public UserService(UserRepository userRepository, PatientRepository patientRepository,
                        HospitalAdminRepository hospitalAdminRepository,
@@ -36,7 +37,8 @@ public class UserService  {
                        CounterStaffRepository counterStaffRepository,
                        PharmacistRepository pharmacistRepository,
                        com.hospital.queue_backend.repository.DoctorAssignmentRepository doctorAssignmentRepository,
-                       com.hospital.queue_backend.repository.CommunicationCenterRepository communicationCenterRepository) {
+                       com.hospital.queue_backend.repository.CommunicationCenterRepository communicationCenterRepository,
+                       org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.patientRepository = patientRepository;
         this.hospitalAdminRepository = hospitalAdminRepository;
@@ -45,6 +47,7 @@ public class UserService  {
         this.pharmacistRepository = pharmacistRepository;
         this.doctorAssignmentRepository = doctorAssignmentRepository;
         this.communicationCenterRepository = communicationCenterRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional // වැරදීමක් වුණොත් ටේබල් දෙකටම ඩේටා නොදා Rollback කරන්න
@@ -62,7 +65,7 @@ public class UserService  {
         User user = new User();
         user.setNicNumber(request.getNicNumber());
         user.setPhoneNumber(request.getPhoneNumber());
-        user.setPassword(request.getPassword()); // දැනට plain text දාමු, පස්සේ Spring Security වලින් hash කරමු
+        user.setPassword(passwordEncoder.encode(request.getPassword())); // Encrypt password before saving
         user.setRole("ROLE_PATIENT");
         User savedUser = userRepository.save(user);
 
@@ -88,9 +91,16 @@ public class UserService  {
 
         User user = userOpt.get();
 
-        // 2. Password එක ගැලපෙනවාද බලනවා (දැනට plain text, පස්සේ hash කරමු)
-        if (!user.getPassword().equals(request.getPassword())) {
-            return "Error: Invalid password!";
+        // 2. Password එක ගැලපෙනවාද බලනවා (දැන් hash කරලයි තියෙන්නේ)
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            // Also check plain text just in case it's an old user before encryption was added
+            if (!user.getPassword().equals(request.getPassword())) {
+                return "Error: Invalid password!";
+            } else {
+                // If it matched plain text, upgrade it to hashed
+                user.setPassword(passwordEncoder.encode(request.getPassword()));
+                userRepository.save(user);
+            }
         }
 
         // 3. හැමදේම හරි නම් එයාගේ Role එකත් එක්ක Success කියලා යවනවා

@@ -39,7 +39,7 @@ function DoctorPatientHistory({ user }) {
     
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8080/api/medical-records/search?nic=${searchNic.trim()}`);
+      const res = await fetch(`/api/medical-records/search?nic=${searchNic.trim()}`);
       if (res.ok) {
         const data = await res.json();
         setRecords(data);
@@ -85,7 +85,7 @@ function DoctorPatientHistory({ user }) {
     };
 
     try {
-      const res = await fetch('http://localhost:8080/api/medical-records', {
+      const res = await fetch('/api/medical-records', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestPayload)

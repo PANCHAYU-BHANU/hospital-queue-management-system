@@ -30,7 +30,7 @@ function PatientProfile({ user }) {
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/patients/profile/${user.id}`);
+      const response = await fetch(`/api/patients/profile/${user.id}`);
       if (response.ok) {
         const data = await response.json();
         setProfile(data);
@@ -93,7 +93,7 @@ function PatientProfile({ user }) {
 
     setSaving(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/patients/profile/${user.id}`, {
+      const response = await fetch(`/api/patients/profile/${user.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

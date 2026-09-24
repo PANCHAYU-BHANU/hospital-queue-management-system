@@ -13,7 +13,7 @@ function DoctorProfile({ user }) {
   useEffect(() => {
     if (user?.id) {
       // Fetch Doctor Profiles (Hospitals)
-      fetch(`http://localhost:8080/api/doctors/user/${user.id}`)
+      fetch(`/api/doctors/user/${user.id}`)
         .then(res => res.json())
         .then(data => {
           setDoctorProfiles(data);
@@ -21,7 +21,7 @@ function DoctorProfile({ user }) {
         .catch(err => console.error(err));
 
       // Fetch Profile Picture
-      fetch(`http://localhost:8080/api/users/${user.id}/profile-picture`)
+      fetch(`/api/users/${user.id}/profile-picture`)
         .then(res => res.json())
         .then(data => {
           if (data.profilePicture) {
@@ -61,7 +61,7 @@ function DoctorProfile({ user }) {
   const saveProfilePicture = async (base64String) => {
     setUploading(true);
     try {
-      const res = await fetch(`http://localhost:8080/api/users/${user.id}/profile-picture`, {
+      const res = await fetch(`/api/users/${user.id}/profile-picture`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ profilePicture: base64String })

@@ -48,7 +48,7 @@ function PatientDashboard({ user }) {
           setUserLocation({ lat, lon, accuracy });
           
           try {
-             const res = await fetch(`http://localhost:8080/api/hospital/nearest?lat=${lat}&lon=${lon}`);
+             const res = await fetch(`/api/hospital/nearest?lat=${lat}&lon=${lon}`);
              if (res.ok) {
                  const hospital = await res.json();
                  if (hospital && hospital.id) {
@@ -101,7 +101,7 @@ function PatientDashboard({ user }) {
   const fetchDoctors = async (hospitalId) => {
     setIsFetchingDoctors(true);
     try {
-      const res = await fetch(`http://localhost:8080/api/doctors/hospital/${hospitalId}`);
+      const res = await fetch(`/api/doctors/hospital/${hospitalId}`);
       if (res.ok) {
         const data = await res.json();
         const availableDoctors = data.filter(doc => doc.available && doc.roomNumber !== "Unassigned");
@@ -121,7 +121,7 @@ function PatientDashboard({ user }) {
 
   const fetchActiveTicket = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/queue/active/${user.id}`);
+      const response = await fetch(`/api/queue/active/${user.id}`);
       if (response.ok) {
         const text = await response.text();
         if (text) {
@@ -147,7 +147,7 @@ function PatientDashboard({ user }) {
       
       const fetchPatientProfile = async () => {
         try {
-          const response = await fetch(`http://localhost:8080/api/patients/profile/${user.id}`);
+          const response = await fetch(`/api/patients/profile/${user.id}`);
           if (response.ok) {
             const data = await response.json();
             setPatientProfile(data);
@@ -211,7 +211,7 @@ function PatientDashboard({ user }) {
 
   const fetchWaitTime = async (doctorId) => {
     try {
-      const res = await fetch(`http://localhost:8080/api/queue/estimate-wait-time/${doctorId}`);
+      const res = await fetch(`/api/queue/estimate-wait-time/${doctorId}`);
       if (res.ok) {
         const text = await res.text();
         setWaitTime(text);
@@ -245,7 +245,7 @@ function PatientDashboard({ user }) {
     };
 
     try {
-      const response = await fetch('http://localhost:8080/api/queue/generate', {
+      const response = await fetch('/api/queue/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(tokenRequestData),
@@ -283,7 +283,7 @@ function PatientDashboard({ user }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const res = await fetch(`http://localhost:8080/api/queue/leave/${ticket.id}`, { method: 'PUT' });
+          const res = await fetch(`/api/queue/leave/${ticket.id}`, { method: 'PUT' });
           if (res.ok) {
             const text = await res.text();
             toast.success(text);

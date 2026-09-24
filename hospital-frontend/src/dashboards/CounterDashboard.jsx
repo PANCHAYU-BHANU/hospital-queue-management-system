@@ -23,14 +23,14 @@ function CounterDashboard({ user }) {
   const fetchData = async () => {
     try {
       // Pending Approvals
-      const response = await fetch('http://localhost:8080/api/queue/pending-approvals');
+      const response = await fetch('/api/queue/pending-approvals');
       if (response.ok) {
         const data = await response.json();
         setPendingTokens(data);
       }
 
       // Pending Payments
-      const paymentResponse = await fetch(`http://localhost:8080/api/queue/pending-payments/${hospitalId}`);
+      const paymentResponse = await fetch(`/api/queue/pending-payments/${hospitalId}`);
       if (paymentResponse.ok) {
         const pData = await paymentResponse.json();
         setPendingPayments(pData);
@@ -55,7 +55,7 @@ function CounterDashboard({ user }) {
     setSuccessMsg('');
 
     try {
-      const response = await fetch(`http://localhost:8080/api/queue/approve/${queueId}`, {
+      const response = await fetch(`/api/queue/approve/${queueId}`, {
         method: 'PUT',
       });
 
@@ -80,7 +80,7 @@ function CounterDashboard({ user }) {
     setSuccessMsg('');
 
     try {
-      const response = await fetch(`http://localhost:8080/api/queue/reject/${queueId}`, {
+      const response = await fetch(`/api/queue/reject/${queueId}`, {
         method: 'PUT',
       });
 
@@ -106,7 +106,7 @@ function CounterDashboard({ user }) {
     setSuccessMsg('');
 
     try {
-      const response = await fetch(`http://localhost:8080/api/queue/payment-complete/${queueId}`, {
+      const response = await fetch(`/api/queue/payment-complete/${queueId}`, {
         method: 'PUT',
       });
 
@@ -142,7 +142,7 @@ function CounterDashboard({ user }) {
     };
 
     try {
-      const response = await fetch('http://localhost:8080/api/queue/offline-generate', {
+      const response = await fetch('/api/queue/offline-generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestData)

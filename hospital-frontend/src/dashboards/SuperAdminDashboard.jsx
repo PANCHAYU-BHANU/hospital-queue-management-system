@@ -50,7 +50,7 @@ function SuperAdminDashboard({ activeTab }) {
 
   const fetchUniqueDoctors = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/doctors/unique');
+      const response = await fetch('/api/doctors/unique');
       if (response.ok) {
         const data = await response.json();
         setUniqueDoctors(data);
@@ -62,7 +62,7 @@ function SuperAdminDashboard({ activeTab }) {
     e.preventDefault();
     setAssignDocLoading(true);
     try {
-      const response = await fetch('http://localhost:8080/api/doctors/assign-hospital', {
+      const response = await fetch('/api/doctors/assign-hospital', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(assignDocForm)
@@ -90,7 +90,7 @@ function SuperAdminDashboard({ activeTab }) {
 
   const fetchAdmins = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/superadmin/all');
+      const response = await fetch('/api/superadmin/all');
       if (response.ok) {
         const data = await response.json();
         setAdmins(data);
@@ -100,7 +100,7 @@ function SuperAdminDashboard({ activeTab }) {
 
   const fetchHospitals = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/hospital/all');
+      const response = await fetch('/api/hospital/all');
       if (response.ok) {
         const data = await response.json();
         setHospitals(data);
@@ -115,7 +115,7 @@ function SuperAdminDashboard({ activeTab }) {
 
   const fetchTransfers = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/transfers/pending');
+      const response = await fetch('/api/transfers/pending');
       if (response.ok) {
         const data = await response.json();
         setTransfers(data);
@@ -125,7 +125,7 @@ function SuperAdminDashboard({ activeTab }) {
 
   const fetchDeletes = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/doctor-deletes/pending');
+      const response = await fetch('/api/doctor-deletes/pending');
       if (response.ok) {
         const data = await response.json();
         setDeletes(data);
@@ -135,7 +135,7 @@ function SuperAdminDashboard({ activeTab }) {
 
   const handleApproveRejectTransfer = async (id, isApproved) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/transfers/${id}/handle`, {
+      const response = await fetch(`/api/transfers/${id}/handle`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isApproved })
       });
@@ -150,7 +150,7 @@ function SuperAdminDashboard({ activeTab }) {
 
   const handleApproveRejectDelete = async (id, isApproved) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/doctor-deletes/${id}/handle`, {
+      const response = await fetch(`/api/doctor-deletes/${id}/handle`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isApproved })
       });
@@ -184,7 +184,7 @@ function SuperAdminDashboard({ activeTab }) {
         latitude: parseFloat(hospitalForm.latitude),
         longitude: parseFloat(hospitalForm.longitude)
       };
-      const res = await fetch('http://localhost:8080/api/hospital/register', {
+      const res = await fetch('/api/hospital/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -226,7 +226,7 @@ function SuperAdminDashboard({ activeTab }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await fetch(`http://localhost:8080/api/hospital/update/${hospital.id}`, {
+          const response = await fetch(`/api/hospital/update/${hospital.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(result.value)
@@ -253,7 +253,7 @@ function SuperAdminDashboard({ activeTab }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await fetch(`http://localhost:8080/api/hospital/delete/${id}`, { method: 'DELETE' });
+          const response = await fetch(`/api/hospital/delete/${id}`, { method: 'DELETE' });
           if (response.ok) {
             Swal.fire(t('super_admin_dashboard.deleted', 'Deleted!'), t('super_admin_dashboard.hospital_deleted', 'Hospital has been deleted.'), 'success');
             fetchHospitals();
@@ -292,7 +292,7 @@ function SuperAdminDashboard({ activeTab }) {
     e.preventDefault();
     setALoading(true);
     try {
-      const res = await fetch('http://localhost:8080/api/superadmin/register-admin', {
+      const res = await fetch('/api/superadmin/register-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(adminForm)
@@ -340,7 +340,7 @@ function SuperAdminDashboard({ activeTab }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await fetch(`http://localhost:8080/api/superadmin/update/${admin.id}`, {
+          const response = await fetch(`/api/superadmin/update/${admin.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(result.value)
@@ -367,7 +367,7 @@ function SuperAdminDashboard({ activeTab }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await fetch(`http://localhost:8080/api/superadmin/delete/${id}`, { method: 'DELETE' });
+          const response = await fetch(`/api/superadmin/delete/${id}`, { method: 'DELETE' });
           if(response.ok) {
             Swal.fire(t('super_admin_dashboard.deleted', 'Deleted!'), t('super_admin_dashboard.admin_deleted', 'Admin has been deleted.'), 'success');
             fetchAdmins();

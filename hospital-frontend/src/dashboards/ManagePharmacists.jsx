@@ -15,7 +15,7 @@ function ManagePharmacists({ hospitalId }) {
 
   const fetchPharmacists = async () => {
     try {
-      const res = await fetch(`http://localhost:8080/api/pharmacists/hospital/${hospitalId}`);
+      const res = await fetch(`/api/pharmacists/hospital/${hospitalId}`);
       if (res.ok) {
         const data = await res.json();
         setPharmacists(data);
@@ -36,7 +36,7 @@ function ManagePharmacists({ hospitalId }) {
     setLoading(true);
     
     try {
-      const res = await fetch('http://localhost:8080/api/pharmacists/register', {
+      const res = await fetch('/api/pharmacists/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

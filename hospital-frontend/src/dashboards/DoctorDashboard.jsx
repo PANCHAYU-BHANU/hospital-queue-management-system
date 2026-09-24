@@ -38,7 +38,7 @@ function DoctorDashboard({ user }) {
 
   useEffect(() => {
     if (user?.id) {
-      fetch(`http://localhost:8080/api/doctors/user/${user.id}`)
+      fetch(`/api/doctors/user/${user.id}`)
         .then(res => res.json())
         .then(data => {
           setDoctorProfiles(data);
@@ -58,7 +58,7 @@ function DoctorDashboard({ user }) {
 
   const fetchDoctorQueue = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/queue/doctor/${doctorId}`);
+      const response = await fetch(`/api/queue/doctor/${doctorId}`);
       if (!response.ok) return;
       const data = await response.json();
       
@@ -74,7 +74,7 @@ function DoctorDashboard({ user }) {
 
   const fetchHospitalDetails = async () => {
     try {
-      const res = await fetch(`http://localhost:8080/api/hospital/${hospitalId}`);
+      const res = await fetch(`/api/hospital/${hospitalId}`);
       if (res.ok) {
         let data = await res.json();
         
@@ -100,7 +100,7 @@ function DoctorDashboard({ user }) {
 
   const fetchAvailableMedicines = async () => {
     try {
-      const res = await fetch(`http://localhost:8080/api/medicines/hospital/${hospitalId}`);
+      const res = await fetch(`/api/medicines/hospital/${hospitalId}`);
       if (res.ok) {
         const data = await res.json();
         setAvailableMedicines(data);
@@ -130,7 +130,7 @@ function DoctorDashboard({ user }) {
 
   const fetchRecords = async (nic) => {
     try {
-      const res = await fetch(`http://localhost:8080/api/medical-records/search?nic=${nic}`);
+      const res = await fetch(`/api/medical-records/search?nic=${nic}`);
       if (res.ok) {
         const data = await res.json();
         setRecords(data);
@@ -183,7 +183,7 @@ function DoctorDashboard({ user }) {
     
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/queue/next/${doctorId}`);
+      const response = await fetch(`/api/queue/next/${doctorId}`);
       if (response.ok) {
         fetchDoctorQueue();
       } else {
@@ -200,7 +200,7 @@ function DoctorDashboard({ user }) {
     if (!currentlyTreating) return;
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/queue/start/${currentlyTreating.id}`, { method: 'PUT' });
+      const response = await fetch(`/api/queue/start/${currentlyTreating.id}`, { method: 'PUT' });
       if (response.ok) {
         fetchDoctorQueue();
         fetchAvailableMedicines(); // Fetch fresh medicines stock
@@ -222,7 +222,7 @@ function DoctorDashboard({ user }) {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/queue/complete/${currentlyTreating.id}`, { method: 'PUT' });
+      const response = await fetch(`/api/queue/complete/${currentlyTreating.id}`, { method: 'PUT' });
       if (response.ok) {
         if (callNext) {
           await handleCallNext();
@@ -240,7 +240,7 @@ function DoctorDashboard({ user }) {
   const toggleStatus = async () => {
     const newStatus = !isAvailable;
     try {
-      const res = await fetch(`http://localhost:8080/api/doctors/${doctorId}/status?isAvailable=${newStatus}`, { method: 'PUT' });
+      const res = await fetch(`/api/doctors/${doctorId}/status?isAvailable=${newStatus}`, { method: 'PUT' });
       if (res.ok) {
         setIsAvailable(newStatus);
         Swal.fire('Success', `Status changed to ${newStatus ? 'Active' : 'On Leave'}`, 'success');
@@ -498,7 +498,7 @@ function DoctorDashboard({ user }) {
     };
 
     try {
-      const res = await fetch('http://localhost:8080/api/medical-records', {
+      const res = await fetch('/api/medical-records', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestPayload)

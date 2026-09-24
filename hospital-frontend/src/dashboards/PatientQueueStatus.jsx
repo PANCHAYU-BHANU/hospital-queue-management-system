@@ -13,7 +13,7 @@ function PatientQueueStatus({ user }) {
   const fetchActiveTicketAndStatus = async () => {
     try {
       // Get the active ticket first
-      const ticketRes = await fetch(`http://localhost:8080/api/queue/active/${user.id}`);
+      const ticketRes = await fetch(`/api/queue/active/${user.id}`);
       if (ticketRes.ok) {
         const ticketData = await ticketRes.text();
         if (ticketData) {
@@ -21,7 +21,7 @@ function PatientQueueStatus({ user }) {
           setActiveTicket(ticket);
 
           // Get the live queue status for this ticket
-          const statusRes = await fetch(`http://localhost:8080/api/queue/status/${ticket.id}`);
+          const statusRes = await fetch(`/api/queue/status/${ticket.id}`);
           if (statusRes.ok) {
             const statusData = await statusRes.json();
             setQueueStatus(statusData);
@@ -210,7 +210,7 @@ function PatientQueueStatus({ user }) {
                 
                 if (result.isConfirmed) {
                   try {
-                    const res = await fetch(`http://localhost:8080/api/queue/payment-complete/${activeTicket.id}`, { method: 'PUT' });
+                    const res = await fetch(`/api/queue/payment-complete/${activeTicket.id}`, { method: 'PUT' });
                     if (res.ok) {
                       Swal.default.fire(
                         t('patient_queue_status.swal_completed_title', 'Completed!'),

@@ -46,7 +46,7 @@ function SuperAdminAnalytics() {
   const fetchAnalytics = async (start, end) => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8080/api/analytics/super-admin?startDate=${start}&endDate=${end}`);
+      const res = await fetch(`/api/analytics/super-admin?startDate=${start}&endDate=${end}`);
       if (res.ok) {
         const data = await res.json();
         setStats(data);

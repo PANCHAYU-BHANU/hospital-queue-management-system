@@ -45,7 +45,7 @@ function AdminDashboard({ user, activeTab }) {
 
   const fetchHospitals = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/hospital/all');
+      const response = await fetch('/api/hospital/all');
       if (response.ok) {
         const data = await response.json();
         setHospitals(data);
@@ -55,7 +55,7 @@ function AdminDashboard({ user, activeTab }) {
 
   const fetchRooms = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/rooms/hospital/${user?.hospitalId}`);
+      const response = await fetch(`/api/rooms/hospital/${user?.hospitalId}`);
       if (response.ok) {
         const data = await response.json();
         setRooms(data);
@@ -66,7 +66,7 @@ function AdminDashboard({ user, activeTab }) {
 
   const fetchAssignments = async (roomId) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/rooms/${roomId}/assignments`);
+      const response = await fetch(`/api/rooms/${roomId}/assignments`);
       if (response.ok) {
         const data = await response.json();
         setAssignments(prev => ({ ...prev, [roomId]: data }));
@@ -76,7 +76,7 @@ function AdminDashboard({ user, activeTab }) {
 
   const fetchCounters = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/counters/hospital/${user?.hospitalId}`);
+      const response = await fetch(`/api/counters/hospital/${user?.hospitalId}`);
       if (response.ok) {
         const data = await response.json();
         setCounters(data);
@@ -88,7 +88,7 @@ function AdminDashboard({ user, activeTab }) {
 
   const fetchCenters = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/communication/hospital/${user?.hospitalId}`);
+      const response = await fetch(`/api/communication/hospital/${user?.hospitalId}`);
       if (response.ok) {
         const data = await response.json();
         setCenters(data);
@@ -100,7 +100,7 @@ function AdminDashboard({ user, activeTab }) {
 
   const fetchDoctors = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/doctors/hospital/${user?.hospitalId}`);
+      const response = await fetch(`/api/doctors/hospital/${user?.hospitalId}`);
       if (response.ok) {
         const data = await response.json();
         setDoctors(data);
@@ -118,7 +118,7 @@ function AdminDashboard({ user, activeTab }) {
     try {
       if (activeTab === 'Manage Counters') {
         const payload = { ...counterFormData, hospitalId: user?.hospitalId };
-        const response = await fetch('http://localhost:8080/api/counters/register', {
+        const response = await fetch('/api/counters/register', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload), 
         });
@@ -133,7 +133,7 @@ function AdminDashboard({ user, activeTab }) {
         }
       } else if (activeTab === 'Manage Communication Centers') {
         const payload = { ...counterFormData, hospitalId: user?.hospitalId, centerName: counterFormData.counterNumber };
-        const response = await fetch('http://localhost:8080/api/communication/register', {
+        const response = await fetch('/api/communication/register', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload), 
         });
@@ -148,7 +148,7 @@ function AdminDashboard({ user, activeTab }) {
         }
       } else {
         const payload = { ...formData, hospitalId: user?.hospitalId };
-        const response = await fetch('http://localhost:8080/api/doctors/register', {
+        const response = await fetch('/api/doctors/register', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload), 
         });
@@ -173,7 +173,7 @@ function AdminDashboard({ user, activeTab }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/rooms/hospital/${user?.hospitalId}/add`, {
+      const response = await fetch(`/api/rooms/hospital/${user?.hospitalId}/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: roomName })
@@ -195,7 +195,7 @@ function AdminDashboard({ user, activeTab }) {
       showCancelButton: true, confirmButtonColor: '#e11d48', confirmButtonText: t('admin_dashboard.swal_delete', 'Yes, delete it!')
     }).then(async (result) => {
       if (result.isConfirmed) {
-         await fetch(`http://localhost:8080/api/rooms/delete/${id}`, { method: 'DELETE' });
+         await fetch(`/api/rooms/delete/${id}`, { method: 'DELETE' });
          fetchRooms();
       }
     });
@@ -254,7 +254,7 @@ function AdminDashboard({ user, activeTab }) {
       }
     }).then(async (result) => {
        if (result.isConfirmed && result.value.doctorId) {
-         await fetch(`http://localhost:8080/api/rooms/${roomId}/assign-doctor`, {
+         await fetch(`/api/rooms/${roomId}/assign-doctor`, {
             method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(result.value)
          });
          fetchAssignments(roomId);
@@ -264,7 +264,7 @@ function AdminDashboard({ user, activeTab }) {
   };
 
   const handleRemoveAssignment = async (assignmentId, roomId) => {
-     await fetch(`http://localhost:8080/api/rooms/assignments/delete/${assignmentId}`, { method: 'DELETE' });
+     await fetch(`/api/rooms/assignments/delete/${assignmentId}`, { method: 'DELETE' });
      fetchAssignments(roomId);
   };
 
@@ -296,7 +296,7 @@ function AdminDashboard({ user, activeTab }) {
     }).then(async (result) => {
        if (result.isConfirmed && result.value) {
          try {
-           const response = await fetch('http://localhost:8080/api/transfers/request', {
+           const response = await fetch('/api/transfers/request', {
               method: 'POST', headers: {'Content-Type': 'application/json'},
               body: JSON.stringify({
                  adminUserId: user.id,
@@ -343,7 +343,7 @@ function AdminDashboard({ user, activeTab }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await fetch(`http://localhost:8080/api/counters/update/${counter.id}`, {
+          const response = await fetch(`/api/counters/update/${counter.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(result.value)
@@ -370,7 +370,7 @@ function AdminDashboard({ user, activeTab }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await fetch(`http://localhost:8080/api/counters/delete/${id}`, { method: 'DELETE' });
+          const response = await fetch(`/api/counters/delete/${id}`, { method: 'DELETE' });
           if(response.ok) {
             Swal.fire('Deleted!', 'Counter staff has been deleted.', 'success');
             fetchCounters();
@@ -393,7 +393,7 @@ function AdminDashboard({ user, activeTab }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await fetch(`http://localhost:8080/api/communication/${id}`, { method: 'DELETE' });
+          const response = await fetch(`/api/communication/${id}`, { method: 'DELETE' });
           if(response.ok) {
             Swal.fire('Deleted!', 'Communication Center has been deleted.', 'success');
             fetchCenters();
@@ -435,7 +435,7 @@ function AdminDashboard({ user, activeTab }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const response = await fetch(`http://localhost:8080/api/doctors/update/${doc.id}`, {
+          const response = await fetch(`/api/doctors/update/${doc.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(result.value)
@@ -475,7 +475,7 @@ function AdminDashboard({ user, activeTab }) {
             doctorId: id,
             reason: result.value
           };
-          const response = await fetch(`http://localhost:8080/api/doctor-deletes/request`, {
+          const response = await fetch(`/api/doctor-deletes/request`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)

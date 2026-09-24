@@ -33,7 +33,7 @@ function CommunicationDashboard({ user }) {
 
   const fetchDoctors = async () => {
     try {
-      const res = await fetch(`http://localhost:8080/api/doctors/hospital/${user.hospitalId}`);
+      const res = await fetch(`/api/doctors/hospital/${user.hospitalId}`);
       if (res.ok) {
         const data = await res.json();
         const availableDoctors = data.filter(doc => doc.available && doc.roomNumber !== "Unassigned");
@@ -52,7 +52,7 @@ function CommunicationDashboard({ user }) {
     if (!searchNic) return;
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:8080/api/users/send-otp', {
+      const res = await fetch('/api/users/send-otp', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nicNumber: searchNic })
       });
@@ -74,7 +74,7 @@ function CommunicationDashboard({ user }) {
     if (!otpCode) return;
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:8080/api/users/verify-otp', {
+      const res = await fetch('/api/users/verify-otp', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nicNumber: searchNic, otp: otpCode })
       });
@@ -100,7 +100,7 @@ function CommunicationDashboard({ user }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:8080/api/users/register', {
+      const res = await fetch('/api/users/register', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(registerData)
       });
@@ -131,7 +131,7 @@ function CommunicationDashboard({ user }) {
         isCommunicationCenter: true // Bypasses distance validation
       };
       
-      const res = await fetch('http://localhost:8080/api/queue/generate', {
+      const res = await fetch('/api/queue/generate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
