@@ -7,7 +7,7 @@ import com.hospital.queue_backend.dto.request.UserLoginRequest;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "http://localhost:5173") // React Frontend එකට විතරක් backend එක call කරන්න අවසර දෙනවා
+@CrossOrigin(origins = "*") // React Frontend එකට විතරක් backend එක call කරන්න අවසර දෙනවා
 public class UserController {
     private final UserService userService;
 

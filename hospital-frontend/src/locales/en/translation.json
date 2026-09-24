@@ -40,7 +40,7 @@
     "checking_location": "Checking location...",
     "error_gps_denied": "Location (GPS) is disabled! Please grant location access. You must be within 5km of the hospital to get a token.",
     "error_too_far": "You are outside the 5km radius of the hospital. You can only get a token when you are near the hospital.",
-    "error_low_accuracy": "Your device cannot provide an accurate GPS location. Please select the hospital manually below.",
+    "error_low_accuracy": "Your device cannot provide an accurate GPS location. Accurate GPS is strictly required to get a token.",
     "select_hospital_manual": "Select Hospital (Manual)",
     "select_hospital_placeholder": "-- Select a Hospital --",
     "select_dept_doctor": "Select Department & Doctor",

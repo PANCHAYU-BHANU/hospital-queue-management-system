@@ -9,7 +9,7 @@ services:
       MYSQL_DATABASE: hospital_queue_db
       MYSQL_ROOT_PASSWORD: 1234
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
 

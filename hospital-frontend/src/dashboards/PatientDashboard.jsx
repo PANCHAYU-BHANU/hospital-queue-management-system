@@ -42,7 +42,6 @@ function PatientDashboard({ user }) {
           if (!isMobile || accuracy > 2000) {
               setGpsStatus('low_accuracy');
               setUserLocation({ lat, lon, accuracy });
-              fetchAllHospitals();
               return;
           }
 
@@ -87,7 +86,6 @@ function PatientDashboard({ user }) {
           const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
           if (!isMobile) {
             setGpsStatus('unsupported');
-            fetchAllHospitals();
           } else {
             setGpsStatus('denied');
           }
@@ -96,22 +94,10 @@ function PatientDashboard({ user }) {
       );
     } else {
       setGpsStatus('unsupported');
-      fetchAllHospitals();
     }
   }, []);
 
-  const fetchAllHospitals = async () => {
-    try {
-      const res = await fetch(`http://localhost:8080/api/hospital/all`);
-      if (res.ok) {
-        const data = await res.json();
-        setAllHospitals(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch all hospitals:", err);
-    }
-  };
-
+  // Handle manual hospital selection was removed as per strict GPS requirement
   const fetchDoctors = async (hospitalId) => {
     setIsFetchingDoctors(true);
     try {
@@ -130,18 +116,6 @@ function PatientDashboard({ user }) {
       console.error("Failed to fetch doctors:", err);
     } finally {
       setIsFetchingDoctors(false);
-    }
-  };
-
-  // Handle manual hospital selection (for devices without GPS)
-  const handleManualHospitalChange = (e) => {
-    const hId = e.target.value;
-    setSelectedHospitalId(hId);
-    if (hId) {
-      fetchDoctors(hId);
-    } else {
-      setDoctors([]);
-      setSelectedDoctorId('');
     }
   };
 
@@ -403,25 +377,14 @@ function PatientDashboard({ user }) {
         )}
 
         {gpsStatus === 'low_accuracy' && (
-          <div className="p-4 text-sm font-bold border text-amber-700 bg-amber-50 rounded-xl border-amber-100">
-            ⚠️ {t('patient_dashboard.error_low_accuracy', 'Your device cannot provide an accurate GPS location. Please select the hospital manually below.')}
+          <div className="p-4 text-sm font-bold border text-rose-700 bg-rose-50 rounded-xl border-rose-100">
+            🚫 {t('patient_dashboard.error_low_accuracy', 'Your device cannot provide an accurate GPS location. Accurate GPS is strictly required to get a token.')}
           </div>
         )}
-
-        {/* MANUAL HOSPITAL SELECTION (For Desktop, Low Accuracy, or No GPS) */}
-        {(gpsStatus === 'unsupported' || gpsStatus === 'low_accuracy') && (
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-slate-400">{t('patient_dashboard.select_hospital_manual', 'Select Hospital (Manual)')}</label>
-            <select 
-              className="w-full px-4 py-3 font-bold border outline-none rounded-xl border-slate-200 bg-slate-50 text-slate-700 focus:ring-2 focus:ring-teal-500"
-              value={selectedHospitalId}
-              onChange={handleManualHospitalChange}
-            >
-              <option value="">{t('patient_dashboard.select_hospital_placeholder', '-- Select a Hospital --')}</option>
-              {allHospitals.map(h => (
-                <option key={h.id} value={h.id}>{h.name} - {h.district}</option>
-              ))}
-            </select>
+        
+        {gpsStatus === 'unsupported' && (
+          <div className="p-4 text-sm font-bold border text-rose-700 bg-rose-50 rounded-xl border-rose-100">
+            🚫 {t('patient_dashboard.error_unsupported', 'GPS is not supported on this device. Location access is strictly required.')}
           </div>
         )}
 

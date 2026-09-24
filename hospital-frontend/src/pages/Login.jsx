@@ -20,6 +20,26 @@ function Login({ onLoginSuccess, onSwitchToRegister, onSwitchToPublic }) {
             const userData = await loginUser(nicNumber, password);
             console.log("Backend එකෙන් ආපු මුළු සේරම ඩේටා ටික මෙන්න:", userData);
 
+            // 📍 Patient කෙනෙක් නම් අනිවාර්යයෙන්ම GPS ලොකේෂන් එක දෙන්න ඕනේ!
+            if (userData.role === 'PATIENT') {
+                if (!navigator.geolocation) {
+                    throw "ඔයාගේ බ්‍රවුසරෙන් GPS වැඩ කරන්නේ නෑ!";
+                }
+
+                await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            console.log("GPS Location ගත්තා:", position.coords);
+                            // ඕන නම් userData එකට මේ ලොකේෂන් එක දාන්න පුළුවන්
+                            resolve();
+                        },
+                        (error) => {
+                            reject("Patient කෙනෙක් විදිහට Log වෙන්න අනිවාර්යයෙන්ම GPS Location (Location Access) දෙන්න ඕනේ!");
+                        }
+                    );
+                });
+            }
+
             // 👑 App.jsx එකේ function එක රන් කරනවා. 
             // එකේදී එරර් එකක් throw වුණොත් කෙලින්ම පල්ලෙහා catch එකට පනිනවා!
             onLoginSuccess(userData);
