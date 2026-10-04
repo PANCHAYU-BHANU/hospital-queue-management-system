@@ -46,7 +46,13 @@ function Login({ onLoginSuccess, onSwitchToRegister, onSwitchToPublic }) {
 
         } catch (err) {
             // 🎯 දැන් බ්‍රවුසර් ඇලර්ට් වෙනුවට UI එකේම ලස්සනට එරර් එක වදිනවා!
-            setError(typeof err === 'string' ? err : t('login.invalid_nic_pass'));
+            if (typeof err === 'string') {
+                setError(err);
+            } else if (err && err.status === 401) {
+                setError(t('login.invalid_nic_pass'));
+            } else {
+                setError(err?.error || err?.message || 'Server Error: Database connection failed or server is down.');
+            }
         } finally {
             setLoading(false);
         }

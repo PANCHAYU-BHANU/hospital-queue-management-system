@@ -29,9 +29,7 @@ function Sidebar({ role, fullName, onLogout, activeTab, setActiveTab }) {
         ];
       case 'COUNTER':
         return [
-          { name: 'Pending Approvals', label: t('sidebar.pending_approvals', 'Pending Approvals'), icon: '⏳' },
-          { name: 'All Tokens', label: t('sidebar.all_tokens', 'All Tokens'), icon: '🎟️' },
-          { name: 'Hospital Stats', label: t('sidebar.hospital_stats', 'Hospital Stats'), icon: '📊' }
+          { name: 'Pending Approvals', label: t('sidebar.pending_approvals', 'Pending Approvals'), icon: '⏳' }
         ];
       case 'SUPER_ADMIN':
         return [

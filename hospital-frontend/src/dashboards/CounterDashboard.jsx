@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 function CounterDashboard({ user }) {
   const { t } = useTranslation();
   const [pendingTokens, setPendingTokens] = useState([]);
-  const [pendingPayments, setPendingPayments] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [doctorQueues, setDoctorQueues] = useState({});
   const [actionLoading, setActionLoading] = useState(null); 
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -14,12 +15,62 @@ function CounterDashboard({ user }) {
   const [offlineName, setOfflineName] = useState('');
   const [offlineAge, setOfflineAge] = useState('');
   const [offlineGender, setOfflineGender] = useState('Male');
+  const [offlineDoctorId, setOfflineDoctorId] = useState('');
   const [offlinePriority, setOfflinePriority] = useState(false);
   const [offlineLoading, setOfflineLoading] = useState(false);
+  const [nicError, setNicError] = useState('');
 
   const hospitalId = user?.hospitalId || 1;
 
-  // 🔄 1. Pending Approvals & Payments Backend එකෙන් ගන්න ලොජික් එක
+  // 📝 NIC Parser Logic
+  useEffect(() => {
+    const nic = offlineNic.trim();
+    if (nic === '') {
+      setNicError('');
+      setOfflineAge('');
+      return;
+    }
+
+    const isValid = /^[0-9]{9}[vVxX]$/.test(nic) || /^[0-9]{12}$/.test(nic);
+    if (!isValid) {
+      setNicError(t('register.invalid_nic', 'Invalid NIC format'));
+      return;
+    } else {
+      setNicError('');
+    }
+
+    if (nic.length === 10 || nic.length === 12) {
+      let year = "";
+      let days = 0;
+      let gender = "Male";
+
+      if (nic.length === 10 && !isNaN(nic.substring(0, 2))) {
+        year = "19" + nic.substring(0, 2);
+        days = parseInt(nic.substring(2, 5));
+      } 
+      else if (nic.length === 12 && !isNaN(nic.substring(0, 4))) {
+        year = nic.substring(0, 4);
+        days = parseInt(nic.substring(4, 7));
+      } else {
+        return;
+      }
+
+      if (days > 500) {
+        gender = "Female";
+        days = days - 500;
+      }
+
+      if (days > 0 && days <= 366) {
+        const currentYear = new Date().getFullYear();
+        const calculatedAge = currentYear - parseInt(year);
+
+        setOfflineGender(gender);
+        setOfflineAge(calculatedAge.toString());
+      }
+    }
+  }, [offlineNic, t]);
+
+  // 🔄 Fetch Pending Approvals and Doctors
   const fetchData = async () => {
     try {
       // Pending Approvals
@@ -29,16 +80,35 @@ function CounterDashboard({ user }) {
         setPendingTokens(data);
       }
 
-      // Pending Payments
-      const paymentResponse = await fetch(`/api/queue/pending-payments/${hospitalId}`);
-      if (paymentResponse.ok) {
-        const pData = await paymentResponse.json();
-        setPendingPayments(pData);
-      }
+      // Fetch Doctors in the hospital
+      const docRes = await fetch(`/api/doctors/hospital/${hospitalId}`);
+      if (docRes.ok) {
+        const docs = await docRes.json();
+        const availableDocs = docs.filter(d => d.available && d.activeShift && d.roomNumber !== "Unassigned");
+        setDoctors(availableDocs);
+        if (availableDocs.length > 0 && !offlineDoctorId) {
+          setOfflineDoctorId(availableDocs[0].id);
+        }
 
+        // Fetch queue stats for each doctor
+        const qStats = {};
+        for (const doc of availableDocs) {
+          const qRes = await fetch(`/api/queue/doctor/${doc.id}`);
+          if (qRes.ok) {
+            const qData = await qRes.json();
+            const pendingNormal = qData.filter(q => q.status === 'PENDING' && q.queueType === 'NORMAL').length;
+            const pendingPriority = qData.filter(q => q.status === 'PENDING' && q.queueType === 'PRIORITY').length;
+            qStats[doc.id] = {
+              total: pendingNormal + pendingPriority,
+              normal: pendingNormal,
+              priority: pendingPriority
+            };
+          }
+        }
+        setDoctorQueues(qStats);
+      }
     } catch (error) {
       console.error("Fetch pending error:", error);
-      setErrorMsg(t('counter_dashboard.server_not_connected', 'Server not connected! 🔌'));
     }
   };
 
@@ -48,7 +118,7 @@ function CounterDashboard({ user }) {
     return () => clearInterval(interval);
   }, [hospitalId]);
 
-  // 🚀 2. "Approve" බටන් එක
+  // 🚀 Approve Button
   const handleApprove = async (queueId) => {
     setActionLoading(queueId);
     setErrorMsg('');
@@ -99,35 +169,18 @@ function CounterDashboard({ user }) {
     }
   };
 
-  // 💰 3. Complete Payment
-  const handleCompletePayment = async (queueId) => {
-    setActionLoading(`pay-${queueId}`);
-    setErrorMsg('');
-    setSuccessMsg('');
-
-    try {
-      const response = await fetch(`/api/queue/payment-complete/${queueId}`, {
-        method: 'PUT',
-      });
-
-      if (response.ok) {
-        setSuccessMsg(t('counter_dashboard.payment_completed', 'Payment completed! Patient consultation fully complete! ✅'));
-        fetchData();
-        setTimeout(() => setSuccessMsg(''), 3000);
-      } else {
-        setErrorMsg(t('counter_dashboard.failed_to_complete_payment', 'Failed to complete payment.'));
-      }
-    } catch (error) {
-      console.error("Payment error:", error);
-      setErrorMsg(t('counter_dashboard.server_issue', 'Server issue!'));
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  // 📝 4. Offline Patient Registration
+  // 📝 Offline Patient Registration
   const handleOfflineRegistration = async (e) => {
     e.preventDefault();
+    if (nicError || !offlineAge) {
+      setErrorMsg(t('counter_dashboard.invalid_nic_details', 'Please enter a valid NIC!'));
+      return;
+    }
+    if (!offlineDoctorId) {
+      setErrorMsg(t('counter_dashboard.select_doctor_first', 'Please select a doctor!'));
+      return;
+    }
+
     setOfflineLoading(true);
     setErrorMsg('');
     setSuccessMsg('');
@@ -137,7 +190,7 @@ function CounterDashboard({ user }) {
       fullName: offlineName,
       age: parseInt(offlineAge),
       gender: offlineGender,
-      doctorId: 1, // Default OPD doctor
+      doctorId: parseInt(offlineDoctorId),
       specialNeed: offlinePriority
     };
 
@@ -180,6 +233,91 @@ function CounterDashboard({ user }) {
           {errorMsg}
         </div>
       )}
+
+      {/* 🏥 Offline Registration Form */}
+      <div className="bg-white p-8 rounded-3xl border border-slate-200/60 shadow-sm mt-8">
+        <h3 className="flex items-center gap-2 text-lg font-black text-slate-800 mb-6">
+          <span className="text-teal-600">📝</span> {t('counter_dashboard.register_walkin_patient', 'Register Walk-in Patient').replace('📝 ', '')}
+        </h3>
+        
+        <form onSubmit={handleOfflineRegistration} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">{t('counter_dashboard.nic_number', 'NIC Number')}</label>
+            <input required type="text" value={offlineNic} onChange={e => setOfflineNic(e.target.value.toUpperCase())} className="w-full px-4 py-3 border rounded-xl border-slate-200 focus:ring-2 focus:ring-teal-500 outline-none" placeholder={t('counter_dashboard.nic_placeholder', 'e.g., 901234567V')}/>
+            {nicError && <p className="text-xs text-rose-500 mt-1 font-semibold">{nicError}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">{t('counter_dashboard.full_name', 'Full Name')}</label>
+            <input required type="text" value={offlineName} onChange={e => setOfflineName(e.target.value)} className="w-full px-4 py-3 border rounded-xl border-slate-200 focus:ring-2 focus:ring-teal-500 outline-none" placeholder={t('counter_dashboard.full_name', 'Patient Name')}/>
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">{t('counter_dashboard.age', 'Age')}</label>
+            <input required type="text" value={offlineAge} readOnly className="w-full px-4 py-3 border rounded-xl bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed outline-none" placeholder={t('counter_dashboard.age', 'Age (Auto)')}/>
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">{t('counter_dashboard.gender', 'Gender')}</label>
+            <input required type="text" value={offlineGender} readOnly className="w-full px-4 py-3 border rounded-xl bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed outline-none"/>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-bold text-slate-700 mb-2">{t('counter_dashboard.select_doctor', 'Select Doctor')}</label>
+            <select required value={offlineDoctorId} onChange={e => setOfflineDoctorId(e.target.value)} className="w-full px-4 py-3 border rounded-xl border-slate-200 focus:ring-2 focus:ring-teal-500 outline-none">
+              {doctors.map(doc => (
+                <option key={doc.id} value={doc.id}>Dr. {doc.doctorName} ({doc.roomNumber}) - {doc.specialty}</option>
+              ))}
+            </select>
+          </div>
+          <div className="md:col-span-2 flex items-center gap-3">
+            <input type="checkbox" id="offlinePriority" checked={offlinePriority} onChange={e => setOfflinePriority(e.target.checked)} className="w-5 h-5 text-teal-600 rounded border-slate-300 focus:ring-teal-500"/>
+            <label htmlFor="offlinePriority" className="text-sm font-bold text-slate-700">{t('counter_dashboard.special_need_priority', 'Special Need / Priority (Senior / Disabled)')}</label>
+          </div>
+          <div className="md:col-span-2 pt-4 border-t border-slate-100">
+            <button disabled={offlineLoading || !offlineAge} type="submit" className="w-full py-4 text-white font-black bg-teal-600 hover:bg-teal-700 rounded-xl transition shadow-lg shadow-teal-600/20 disabled:bg-slate-300 disabled:cursor-not-allowed">
+              {offlineLoading ? t('counter_dashboard.registering', 'Registering...') : t('counter_dashboard.register_patient_btn', 'Register Patient & Generate Token 🎟️')}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* 👨‍⚕️ Doctors Live Queue Stats */}
+      <div className="overflow-hidden bg-white border shadow-sm rounded-3xl border-slate-200/60 mt-8">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/50">
+          <h3 className="flex items-center gap-2 text-lg font-black text-slate-800">
+            <span className="text-teal-600">📊</span> {t('counter_dashboard.doctors_queues', 'Doctors Live Queue Status')}
+          </h3>
+        </div>
+
+        {doctors.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+            {doctors.map((doc) => {
+              const stats = doctorQueues[doc.id] || { total: 0, normal: 0, priority: 0 };
+              return (
+                <div key={doc.id} className="p-5 border rounded-2xl border-slate-100 bg-slate-50 shadow-sm flex flex-col items-center justify-center text-center">
+                  <div className="text-3xl mb-2">👨‍⚕️</div>
+                  <h4 className="font-bold text-slate-800">Dr. {doc.doctorName}</h4>
+                  <p className="text-xs text-slate-500 font-semibold mb-3">{doc.roomNumber} - {doc.specialty}</p>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-center">
+                      <span className="text-2xl font-black text-teal-600">{stats.normal}</span>
+                      <span className="text-[10px] font-bold uppercase text-slate-400">Normal</span>
+                    </div>
+                    <div className="h-8 w-px bg-slate-200"></div>
+                    <div className="flex flex-col items-center">
+                      <span className="text-2xl font-black text-rose-500">{stats.priority}</span>
+                      <span className="text-[10px] font-bold uppercase text-slate-400">Priority</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center py-10 space-y-2 text-center text-slate-400">
+             <span className="block text-4xl">📭</span>
+             <p className="font-bold text-slate-500">{t('counter_dashboard.no_doctors', 'No doctors available right now.')}</p>
+          </div>
+        )}
+      </div>
 
       {/* 📋 Pending Approvals Table Card */}
       <div className="overflow-hidden bg-white border shadow-sm rounded-3xl border-slate-200/60">
@@ -262,95 +400,6 @@ function CounterDashboard({ user }) {
             <p className="max-w-xs text-xs text-slate-400">{t('counter_dashboard.token_added_live', 'When a patient gets a token, it will be added to this list live.')}</p>
           </div>
         )}
-      </div>
-
-      {/* 💰 Pending Payments Table Card */}
-      <div className="overflow-hidden bg-white border shadow-sm rounded-3xl border-teal-200 shadow-teal-500/5 mt-8">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-teal-100 bg-teal-50/50">
-          <h3 className="flex items-center gap-2 text-lg font-black text-teal-800">
-            <span className="text-2xl">💰</span> {t('counter_dashboard.pending_pharmacy_payments', 'Pending Pharmacy Payments').replace('💰 ', '')}
-          </h3>
-        </div>
-
-        {pendingPayments.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="text-xs font-bold tracking-wider uppercase border-b border-teal-100 text-teal-600 bg-teal-50/30">
-                  <th className="px-6 py-4">{t('counter_dashboard.token_no', 'Token No')}</th>
-                  <th className="px-6 py-4">{t('counter_dashboard.patient_name', 'Patient Name')}</th>
-                  <th className="px-6 py-4">{t('counter_dashboard.doctor', 'Doctor')}</th>
-                  <th className="px-6 py-4 text-right">{t('counter_dashboard.actions', 'Actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm font-medium divide-y divide-teal-50 text-slate-700">
-                {pendingPayments.map((token) => (
-                  <tr key={token.id} className="transition hover:bg-teal-50/40">
-                    <td className="px-6 py-4">
-                      <span className="px-3 py-1 text-xs font-black text-teal-700 rounded-lg bg-teal-50">
-                        #{token.tokenNumber}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 font-bold text-slate-800">{token.patientName}</td>
-                    <td className="px-6 py-4 text-slate-500">Dr. {token.doctorName}</td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => handleCompletePayment(token.id)}
-                        disabled={actionLoading === `pay-${token.id}`}
-                        className="px-6 py-2.5 text-xs font-black text-white transition bg-teal-600 shadow-md hover:bg-teal-700 disabled:bg-slate-300 rounded-xl"
-                      >
-                        {actionLoading === `pay-${token.id}` ? t('counter_dashboard.processing', 'Processing...') : t('counter_dashboard.payment_received', '💵 Payment Received')}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center py-10 space-y-2 text-center text-slate-400">
-             <span className="block text-4xl">🎉</span>
-             <p className="font-bold text-slate-500">{t('counter_dashboard.no_pending_payments', 'No pending payments for pharmacy.')}</p>
-          </div>
-        )}
-      </div>
-
-      {/* 🏥 Offline Registration Form */}
-      <div className="bg-white p-8 rounded-3xl border border-slate-200/60 shadow-sm mt-8">
-        <h3 className="flex items-center gap-2 text-lg font-black text-slate-800 mb-6">
-          <span className="text-teal-600">📝</span> {t('counter_dashboard.register_walkin_patient', 'Register Walk-in Patient').replace('📝 ', '')}
-        </h3>
-        
-        <form onSubmit={handleOfflineRegistration} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">{t('counter_dashboard.nic_number', 'NIC Number')}</label>
-            <input required type="text" value={offlineNic} onChange={e => setOfflineNic(e.target.value)} className="w-full px-4 py-3 border rounded-xl border-slate-200 focus:ring-2 focus:ring-teal-500 outline-none" placeholder={t('counter_dashboard.nic_placeholder', 'e.g., 901234567V')}/>
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">{t('counter_dashboard.full_name', 'Full Name')}</label>
-            <input required type="text" value={offlineName} onChange={e => setOfflineName(e.target.value)} className="w-full px-4 py-3 border rounded-xl border-slate-200 focus:ring-2 focus:ring-teal-500 outline-none" placeholder={t('counter_dashboard.full_name', 'Patient Name')}/>
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">{t('counter_dashboard.age', 'Age')}</label>
-            <input required type="number" value={offlineAge} onChange={e => setOfflineAge(e.target.value)} className="w-full px-4 py-3 border rounded-xl border-slate-200 focus:ring-2 focus:ring-teal-500 outline-none" placeholder={t('counter_dashboard.age_placeholder', 'e.g., 45')}/>
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">{t('counter_dashboard.gender', 'Gender')}</label>
-            <select value={offlineGender} onChange={e => setOfflineGender(e.target.value)} className="w-full px-4 py-3 border rounded-xl border-slate-200 focus:ring-2 focus:ring-teal-500 outline-none">
-              <option value="Male">{t('counter_dashboard.male', 'Male')}</option>
-              <option value="Female">{t('counter_dashboard.female', 'Female')}</option>
-            </select>
-          </div>
-          <div className="md:col-span-2 flex items-center gap-3">
-            <input type="checkbox" id="offlinePriority" checked={offlinePriority} onChange={e => setOfflinePriority(e.target.checked)} className="w-5 h-5 text-teal-600 rounded border-slate-300 focus:ring-teal-500"/>
-            <label htmlFor="offlinePriority" className="text-sm font-bold text-slate-700">{t('counter_dashboard.special_need_priority', 'Special Need / Priority (Senior / Disabled)')}</label>
-          </div>
-          <div className="md:col-span-2 pt-4 border-t border-slate-100">
-            <button disabled={offlineLoading} type="submit" className="w-full py-4 text-white font-black bg-teal-600 hover:bg-teal-700 rounded-xl transition shadow-lg shadow-teal-600/20 disabled:bg-slate-300">
-              {offlineLoading ? t('counter_dashboard.registering', 'Registering...') : t('counter_dashboard.register_patient_btn', 'Register Patient & Generate Token 🎟️')}
-            </button>
-          </div>
-        </form>
       </div>
 
     </div>

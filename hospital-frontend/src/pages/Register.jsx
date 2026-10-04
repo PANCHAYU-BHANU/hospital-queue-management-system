@@ -107,7 +107,9 @@ function Register({ onSwitchToLogin }) {
 
       const message = await response.text();
 
-      if (message.includes('Error')) {
+      if (!response.ok) {
+        Swal.fire('Error', message || 'Server Error. Please try again later.', 'error');
+      } else if (message.includes('Error')) {
         Swal.fire('Error', message, 'error');
       } else {
         setIsSuccess(true); // ◄ මෙතනදී Custom Success ස්ක්‍රීන් එක ඔන් කරනවා!

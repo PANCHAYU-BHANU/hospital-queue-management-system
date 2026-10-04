@@ -17,13 +17,61 @@ function CommunicationDashboard({ user }) {
 
   // Register Patient State
   const [registerData, setRegisterData] = useState({
-    nicNumber: '', phoneNumber: '', password: 'dummyPassword123', fullName: '', age: '', gender: 'Male'
+    nicNumber: '', phoneNumber: '', password: '', fullName: '', age: '', gender: 'Male'
   });
+  const [nicError, setNicError] = useState('');
 
   // Token Generation State
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
   const [isSpecialNeed, setIsSpecialNeed] = useState(false);
+
+  // 📝 NIC Parser Logic
+  useEffect(() => {
+    const nic = registerData.nicNumber.trim();
+    if (nic === '') {
+      setNicError('');
+      setRegisterData(prev => ({ ...prev, age: '' }));
+      return;
+    }
+
+    const isValid = /^[0-9]{9}[vVxX]$/.test(nic) || /^[0-9]{12}$/.test(nic);
+    if (!isValid) {
+      setNicError(t('register.invalid_nic', 'Invalid NIC format'));
+      return;
+    } else {
+      setNicError('');
+    }
+
+    if (nic.length === 10 || nic.length === 12) {
+      let year = "";
+      let days = 0;
+      let gender = "Male";
+
+      if (nic.length === 10 && !isNaN(nic.substring(0, 2))) {
+        year = "19" + nic.substring(0, 2);
+        days = parseInt(nic.substring(2, 5));
+      } 
+      else if (nic.length === 12 && !isNaN(nic.substring(0, 4))) {
+        year = nic.substring(0, 4);
+        days = parseInt(nic.substring(4, 7));
+      } else {
+        return;
+      }
+
+      if (days > 500) {
+        gender = "Female";
+        days = days - 500;
+      }
+
+      if (days > 0 && days <= 366) {
+        const currentYear = new Date().getFullYear();
+        const calculatedAge = currentYear - parseInt(year);
+
+        setRegisterData(prev => ({ ...prev, gender: gender, age: calculatedAge.toString() }));
+      }
+    }
+  }, [registerData.nicNumber, t]);
 
   useEffect(() => {
     if (verifiedPatient) {
@@ -98,6 +146,10 @@ function CommunicationDashboard({ user }) {
 
   const handleRegisterPatient = async (e) => {
     e.preventDefault();
+    if (nicError || !registerData.age) {
+      Swal.fire(t('communication_dashboard.server_connection_failed', 'Error'), t('register.invalid_nic', 'Please enter a valid NIC!'), 'error');
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch('/api/users/register', {
@@ -368,8 +420,9 @@ function CommunicationDashboard({ user }) {
                     <input 
                       type="text" required placeholder="NIC"
                       className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50"
-                      value={registerData.nicNumber} onChange={e => setRegisterData({...registerData, nicNumber: e.target.value})}
+                      value={registerData.nicNumber} onChange={e => setRegisterData({...registerData, nicNumber: e.target.value.toUpperCase()})}
                     />
+                    {nicError && <p className="text-xs text-rose-500 font-semibold">{nicError}</p>}
                   </div>
                   
                   <div className="space-y-2">
@@ -382,29 +435,36 @@ function CommunicationDashboard({ user }) {
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-slate-400">{t('counter_dashboard.age', 'Age')}</label>
+                    <label className="text-xs font-bold uppercase text-slate-400">Password</label>
                     <input 
-                      type="number" required placeholder={t('communication_dashboard.age_placeholder', 'Age')}
+                      type="password" required placeholder="Password"
                       className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50"
-                      value={registerData.age} onChange={e => setRegisterData({...registerData, age: e.target.value})}
+                      value={registerData.password} onChange={e => setRegisterData({...registerData, password: e.target.value})}
                     />
                   </div>
                   
                   <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase text-slate-400">{t('counter_dashboard.age', 'Age')}</label>
+                    <input 
+                      type="number" required placeholder={t('communication_dashboard.age_placeholder', 'Age (Auto)')}
+                      className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed"
+                      value={registerData.age} readOnly
+                    />
+                  </div>
+                  
+                  <div className="space-y-2 md:col-span-2">
                     <label className="text-xs font-bold uppercase text-slate-400">{t('counter_dashboard.gender', 'Gender')}</label>
-                    <select 
-                      className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-50"
-                      value={registerData.gender} onChange={e => setRegisterData({...registerData, gender: e.target.value})}
-                    >
-                      <option value="Male">{t('counter_dashboard.male', 'Male')}</option>
-                      <option value="Female">{t('counter_dashboard.female', 'Female')}</option>
-                    </select>
+                    <input 
+                      type="text" required
+                      className="w-full px-4 py-3 font-bold border rounded-xl border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed"
+                      value={registerData.gender} readOnly
+                    />
                   </div>
                   
                   <div className="col-span-1 md:col-span-2 mt-4">
                     <button 
-                      type="submit" disabled={loading}
-                      className="w-full py-4 bg-teal-600 text-white font-black rounded-xl shadow-lg hover:bg-teal-700 transition"
+                      type="submit" disabled={loading || !registerData.age}
+                      className="w-full py-4 bg-teal-600 text-white font-black rounded-xl shadow-lg hover:bg-teal-700 transition disabled:bg-slate-300 disabled:cursor-not-allowed"
                     >
                       {loading ? t('communication_dashboard.registering', 'Registering...') : t('communication_dashboard.register_patient', 'Register Patient')}
                     </button>

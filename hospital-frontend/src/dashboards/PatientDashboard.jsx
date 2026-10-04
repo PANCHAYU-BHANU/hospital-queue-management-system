@@ -27,74 +27,96 @@ function PatientDashboard({ user }) {
   
   const isOpdClosed = selectedHospitalId && !isFetchingDoctors && doctors.length === 0;
 
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          setGpsStatus('granted');
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          const accuracy = position.coords.accuracy;
-          
-          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const fetchLocation = () => {
+    setGpsStatus('checking');
+    if (!navigator.geolocation) {
+      setGpsStatus('unsupported');
+      return;
+    }
 
-          // If not a mobile device OR accuracy is worse than 2km, fallback to manual selection
-          if (!isMobile || accuracy > 2000) {
-              setGpsStatus('low_accuracy');
-              setUserLocation({ lat, lon, accuracy });
-              return;
-          }
+    const handleSuccess = async (position) => {
+      setGpsStatus('granted');
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      const accuracy = position.coords.accuracy;
+      
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+      // If not a mobile device OR accuracy is worse than 2km, fallback to manual selection
+      if (!isMobile || accuracy > 2000) {
+          setGpsStatus('low_accuracy');
           setUserLocation({ lat, lon, accuracy });
-          
-          try {
-             const res = await fetch(`/api/hospital/nearest?lat=${lat}&lon=${lon}`);
-             if (res.ok) {
-                 const hospital = await res.json();
-                 if (hospital && hospital.id) {
-                     // Calculate distance
-                     const R = 6371; 
-                     const dLat = (hospital.latitude - lat) * Math.PI / 180;
-                     const dLon = (hospital.longitude - lon) * Math.PI / 180;
-                     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                               Math.cos(lat * Math.PI / 180) * Math.cos(hospital.latitude * Math.PI / 180) *
-                               Math.sin(dLon/2) * Math.sin(dLon/2);
-                     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                     const distance = R * c;
-                     
-                     setNearestHospital(hospital);
-                     
-                     if (distance <= 5.0) {
-                         setSelectedHospitalId(hospital.id);
-                         fetchDoctors(hospital.id);
-                     } else {
-                         setGpsStatus('too_far');
-                     }
+          return;
+      }
+
+      setUserLocation({ lat, lon, accuracy });
+      
+      try {
+         const res = await fetch(`/api/hospital/nearest?lat=${lat}&lon=${lon}`);
+         if (res.ok) {
+             const hospital = await res.json();
+             if (hospital && hospital.id) {
+                 // Calculate distance
+                 const R = 6371; 
+                 const dLat = (hospital.latitude - lat) * Math.PI / 180;
+                 const dLon = (hospital.longitude - lon) * Math.PI / 180;
+                 const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                           Math.cos(lat * Math.PI / 180) * Math.cos(hospital.latitude * Math.PI / 180) *
+                           Math.sin(dLon/2) * Math.sin(dLon/2);
+                 const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                 const distance = R * c;
+                 
+                 setNearestHospital(hospital);
+                 
+                 if (distance <= 5.0) {
+                     setSelectedHospitalId(hospital.id);
+                     fetchDoctors(hospital.id);
                  } else {
                      setGpsStatus('too_far');
                  }
              } else {
-                 setGpsStatus('too_far'); // Fallback if API fails
+                 setGpsStatus('too_far');
              }
-          } catch(err) {
-             console.error("Error fetching nearest hospital:", err);
-             setError("Failed to fetch nearest hospital.");
-          }
-        },
-        (err) => {
-          console.log("Geolocation error:", err);
-          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-          if (!isMobile) {
-            setGpsStatus('unsupported');
-          } else {
-            setGpsStatus('denied');
-          }
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    } else {
-      setGpsStatus('unsupported');
-    }
+         } else {
+             setGpsStatus('too_far'); // Fallback if API fails
+         }
+      } catch(err) {
+         console.error("Error fetching nearest hospital:", err);
+         setError("Failed to fetch nearest hospital.");
+      }
+    };
+
+    const handleError = (err, isFallback = false) => {
+      console.log(`Geolocation error (${isFallback ? 'Fallback' : 'High Accuracy'}):`, err);
+      
+      if (!isFallback && (err.code === 3 || err.code === 2)) {
+        console.log("Falling back to standard accuracy (Wi-Fi/Cell Tower)...");
+        navigator.geolocation.getCurrentPosition(
+          handleSuccess,
+          (fallbackErr) => handleError(fallbackErr, true),
+          { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
+        );
+        return;
+      }
+
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (!isMobile) {
+        setGpsStatus('unsupported');
+      } else {
+        setGpsStatus('denied');
+      }
+    };
+
+    // Try High Accuracy First
+    navigator.geolocation.getCurrentPosition(
+      handleSuccess,
+      (err) => handleError(err, false),
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 }
+    );
+  };
+
+  useEffect(() => {
+    fetchLocation();
   }, []);
 
   // Handle manual hospital selection was removed as per strict GPS requirement
@@ -339,6 +361,15 @@ function PatientDashboard({ user }) {
         {gpsStatus === 'denied' && (
           <div className="p-4 text-sm font-bold border text-rose-700 bg-rose-50 rounded-xl border-rose-100">
             🚫 {t('patient_dashboard.error_gps_denied', 'Location (GPS) is disabled! Please grant location access. You must be within 5km of the hospital to get a token.')}
+            <button 
+              onClick={fetchLocation} 
+              className="mt-3 px-4 py-2 bg-rose-600 text-white rounded-lg shadow-sm hover:bg-rose-700 w-full sm:w-auto font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              නැවත උත්සාහ කරන්න (Retry)
+            </button>
           </div>
         )}
 
