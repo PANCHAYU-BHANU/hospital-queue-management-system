@@ -338,8 +338,21 @@ public class QueueService {
         User user = userRepository.findByNicNumber(request.getNicNumber()).orElseGet(() -> {
             User newUser = new User();
             newUser.setNicNumber(request.getNicNumber());
-            newUser.setPhoneNumber(request.getNicNumber() + "_offline"); // dummy phone
-            newUser.setPassword("offline_password"); // dummy password
+            
+            // Use provided phone number or fallback to offline dummy
+            if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+                newUser.setPhoneNumber(request.getPhoneNumber());
+            } else {
+                newUser.setPhoneNumber(request.getNicNumber() + "_offline");
+            }
+
+            // Use provided password or fallback to dummy
+            if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
+                newUser.setPassword(request.getPassword());
+            } else {
+                newUser.setPassword("offline_password");
+            }
+            
             newUser.setRole("ROLE_PATIENT");
             return userRepository.save(newUser);
         });

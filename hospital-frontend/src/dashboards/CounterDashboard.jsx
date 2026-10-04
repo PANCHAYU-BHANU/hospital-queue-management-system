@@ -13,6 +13,8 @@ function CounterDashboard({ user }) {
   // Offline Registration State
   const [offlineNic, setOfflineNic] = useState('');
   const [offlineName, setOfflineName] = useState('');
+  const [offlinePhone, setOfflinePhone] = useState('');
+  const [offlinePassword, setOfflinePassword] = useState('');
   const [offlineAge, setOfflineAge] = useState('');
   const [offlineGender, setOfflineGender] = useState('Male');
   const [offlineDoctorId, setOfflineDoctorId] = useState('');
@@ -188,6 +190,8 @@ function CounterDashboard({ user }) {
     const requestData = {
       nicNumber: offlineNic,
       fullName: offlineName,
+      phoneNumber: offlinePhone,
+      password: offlinePassword,
       age: parseInt(offlineAge),
       gender: offlineGender,
       doctorId: parseInt(offlineDoctorId),
@@ -205,6 +209,8 @@ function CounterDashboard({ user }) {
         setSuccessMsg(`✅ ${text}`);
         setOfflineNic('');
         setOfflineName('');
+        setOfflinePhone('');
+        setOfflinePassword('');
         setOfflineAge('');
         setOfflinePriority(false);
         fetchData();
@@ -249,6 +255,14 @@ function CounterDashboard({ user }) {
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-2">{t('counter_dashboard.full_name', 'Full Name')}</label>
             <input required type="text" value={offlineName} onChange={e => setOfflineName(e.target.value)} className="w-full px-4 py-3 border rounded-xl border-slate-200 focus:ring-2 focus:ring-teal-500 outline-none" placeholder={t('counter_dashboard.full_name', 'Patient Name')}/>
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">{t('communication_dashboard.phone_number_otp', 'Phone Number (For OTP)')}</label>
+            <input required type="text" value={offlinePhone} onChange={e => setOfflinePhone(e.target.value)} className="w-full px-4 py-3 border rounded-xl border-slate-200 focus:ring-2 focus:ring-teal-500 outline-none" placeholder={t('communication_dashboard.mobile_number_placeholder', 'Mobile Number')}/>
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">Password</label>
+            <input required type="password" value={offlinePassword} onChange={e => setOfflinePassword(e.target.value)} className="w-full px-4 py-3 border rounded-xl border-slate-200 focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Password"/>
           </div>
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-2">{t('counter_dashboard.age', 'Age')}</label>
