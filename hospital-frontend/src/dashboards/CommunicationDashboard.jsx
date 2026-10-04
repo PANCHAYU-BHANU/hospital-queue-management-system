@@ -179,7 +179,7 @@ function CommunicationDashboard({ user }) {
       const payload = {
         userId: patientId,
         doctorId: selectedDoctorId,
-        isSpecialNeed: isSpecialNeed,
+        specialNeed: isSpecialNeed,
         isCommunicationCenter: true // Bypasses distance validation
       };
       
