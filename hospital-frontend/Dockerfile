@@ -25,7 +25,7 @@ RUN echo 'server { \
         try_files $uri $uri/ /index.html; \
     } \
     location /api/ { \
-        proxy_pass http://backend:8080/api/; \
+        proxy_pass http://hospital_queue_backend:8080/api/; \
         proxy_set_header Host $host; \
         proxy_set_header X-Real-IP $remote_addr; \
     } \
