@@ -1,0 +1,4 @@
+Label,# Samples,Average,Min,Max,Std. Dev.,Error %,Throughput,Received KB/sec,Sent KB/sec,Avg. Bytes
+GET Doctor Queue,500,386,2,2884,621.62,0.000%,50.54079,20.43,8.19,414.0
+POST Generate Offline Token,500,288,8,3038,486.62,0.000%,53.23680,24.07,20.78,463.0
+TOTAL,1000,337,2,3038,560.35,0.000%,100.86746,43.19,27.87,438.5
